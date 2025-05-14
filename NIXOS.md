@@ -16,7 +16,7 @@ The simplest approach - just add it to your packages:
 
 {
   # Option 1: Using flakes
-  inputs.web-downloader.url = "github:yourusername/web-downloader";
+  inputs.web-downloader.url = "github:Cody-W-Tucker/web-downloader";
   
   environment.systemPackages = with pkgs; [
     # Add other packages here
@@ -33,7 +33,7 @@ Or enable the service (just adds it to environment.systemPackages for you)
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    web-downloader.url = "github:yourusername/web-downloader"; # Replace with your repo URL
+    web-downloader.url = "github:Cody-W-Tucker/web-downloader";
   };
 
   outputs = { self, nixpkgs, web-downloader, ... }: {

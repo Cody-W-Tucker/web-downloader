@@ -18,7 +18,7 @@ The recommended way to install is using Nix:
 
 ```bash
 # Run once without installing
-nix run github:yourusername/web-downloader -- https://example.com
+nix run github:Cody-W-Tucker/web-downloader -- https://example.com
 ```
 
 #### NixOS Installation
@@ -31,7 +31,7 @@ For NixOS users, you can add the package to your system:
 
 {
   # Option 1: Using flakes
-  inputs.web-downloader.url = "github:yourusername/web-downloader";
+  inputs.web-downloader.url = "github:Cody-W-Tucker/web-downloader";
   
   environment.systemPackages = with pkgs; [
     # Add other packages here
