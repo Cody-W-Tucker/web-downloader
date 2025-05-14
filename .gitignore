@@ -1,0 +1,33 @@
+# Virtual Environment
+.venv/
+.env/
+venv/
+env/
+.direnv/
+
+# Build files
+result/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output directory
+output/
+
+# Logs
+*.log
