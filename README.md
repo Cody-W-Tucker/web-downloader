@@ -16,8 +16,8 @@ A tool that extracts text content from websites and converts it to Markdown form
 
 The recommended way to install is using Nix:
 
+Run once without installing
 ```bash
-# Run once without installing
 nix run github:Cody-W-Tucker/web-downloader -- https://example.com
 ```
 
@@ -44,16 +44,17 @@ See [NIXOS.md](NIXOS.md) for more detailed installation instructions.
 
 ### Manual Installation
 
+Clone the repository
+Create and activate a virtual environment (optional but recommended)
+Install dependencies
+
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd web-downloader
 
-# Create and activate virtual environment (optional but recommended)
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
 ```
 
