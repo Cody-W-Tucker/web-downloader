@@ -23,7 +23,7 @@
             ];
 
           python = pkgs."python${concatMajorMinor pythonVersion}";
-          
+
           pythonWithPackages = python.withPackages (ps: with ps; [
             beautifulsoup4
             requests
@@ -40,18 +40,18 @@
             pname = "web-downloader";
             version = "0.1.0";
             src = ./.;
-            
+
             buildInputs = [
               pythonWithPackages
               pkgs.libxml2
               pkgs.libxslt
               pkgs.zlib
             ];
-            
+
             nativeBuildInputs = [
               pkgs.pkg-config
             ];
-            
+
             installPhase = ''
               mkdir -p $out/bin
               mkdir -p $out/lib
@@ -120,7 +120,7 @@
         });
 
       nixosModules.default = import ./nixos-module.nix;
-      
+
       nixosModule = self.nixosModules.default;
 
       devShells = forEachSupportedSystem ({ pkgs }:
@@ -133,7 +133,7 @@
             ];
 
           python = pkgs."python${concatMajorMinor pythonVersion}";
-          
+
           pythonWithPackages = python.withPackages (ps: with ps; [
             beautifulsoup4
             requests
@@ -150,7 +150,7 @@
           default = pkgs.mkShell {
             packages = [
               pythonWithPackages
-              
+
               # System dependencies
               pkgs.libxml2
               pkgs.libxslt
