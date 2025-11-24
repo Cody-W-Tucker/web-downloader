@@ -86,7 +86,3 @@ The tool will automatically:
   - No flag: Only errors and final summary
   - `-v`: Informational messages
   - `-vv`: Debug messages
-
-## License
-
-[MIT](LICENSE) 
