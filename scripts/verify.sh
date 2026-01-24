@@ -67,6 +67,29 @@ elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
     pytest
   fi
 
+elif [ -f "flake.nix" ]; then
+  echo "🐍 Nix Python project detected"
+
+  # Type checking
+  if command -v mypy &> /dev/null; then
+    echo "✓ Type check (mypy)"
+    mypy src tests
+  fi
+
+  # Linting
+  if command -v ruff &> /dev/null; then
+    echo "✓ Lint (ruff)"
+    ruff check src tests
+  elif command -v flake8 &> /dev/null; then
+    echo "✓ Lint (flake8)"
+    flake8 src tests
+  fi
+
+  # Tests
+  if command -v pytest &> /dev/null; then
+    echo "✓ Tests (pytest)"
+    pytest tests
+  fi
 else
   echo "⚠️  Unknown project type. Update verify.sh to add your checks."
   echo "For now, just checking git status..."

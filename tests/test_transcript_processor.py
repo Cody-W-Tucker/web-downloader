@@ -2,7 +2,7 @@
 Tests for TranscriptProcessor
 """
 import unittest
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import patch, Mock
 from src.transcript_processor import TranscriptProcessor
 
 
@@ -46,7 +46,7 @@ class TestTranscriptProcessor(unittest.TestCase):
         mock_loader.load.return_value = []
         mock_loader_class.from_youtube_url.return_value = mock_loader
         
-        docs = self.processor.load_transcript(
+        self.processor.load_transcript(
             self.sample_url, 
             language=["es", "en"], 
             translation="fr"

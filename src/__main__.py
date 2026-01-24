@@ -9,7 +9,7 @@ try:
     from .main import main
 # Fall back to direct import
 except ImportError:
-    from main import main
+    from main import main  # type: ignore[import-not-found, no-redef]
 
 if __name__ == "__main__":
-    main() 
+    main()

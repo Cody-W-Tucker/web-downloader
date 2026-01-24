@@ -222,6 +222,8 @@
               # pkgs.ruff
               # or
               python.pkgs.ruff
+              pytest
+              mypy
             ]);
           };
         }

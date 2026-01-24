@@ -107,7 +107,7 @@ class RobotsHandler:
                             parser.read()
                             self.parsers[domain] = parser
                             return parser
-                        except:
+                        except Exception:
                             # Create an appropriate parser based on policy
                             empty_parser = urllib.robotparser.RobotFileParser()
                             if self.default_403_policy == 'allow':

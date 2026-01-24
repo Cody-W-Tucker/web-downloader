@@ -34,7 +34,7 @@ Then follow the instructions above to pick and complete ONE task."
 # Run Claude Code in print mode (non-interactive but visible)
 # Allow bypassing permissions for safe operations
 cd "$ROOT_DIR"
-opencode run "$FULL_PROMPT" --model xai/grok-code-fast-1
+opencode run "$FULL_PROMPT" --model xai/grok-4-1-fast
 
 echo
 echo "✅ Iteration complete. Run again to continue, or use ./scripts/ralph.sh for autonomous mode."

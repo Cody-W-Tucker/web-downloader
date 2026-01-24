@@ -306,7 +306,6 @@ class ContentExtractor:
         
         try:
             # Instead of using .copy() which might be the issue, create a new BeautifulSoup object
-            from copy import copy
             from bs4 import BeautifulSoup
             
             # Convert to string and then parse again to create a deep copy

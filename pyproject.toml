@@ -1,0 +1,29 @@
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+  "bs4.*",
+  "yaml.*",
+  "requests.*",
+  "tqdm.*",
+  "googleapiclient.*",
+  "markdownify.*",
+  "langchain_community.*",
+  "youtube_transcript_api.*",
+  "pytube.*"
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "B"]
+ignore = ["E741", "I001", "E501", "B006", "B904"]  # allow single letter vars; isort skip; line length; mutable defaults; raise chaining
+extend-select = ["I"]  # isort
