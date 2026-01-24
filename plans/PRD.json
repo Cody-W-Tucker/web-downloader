@@ -139,8 +139,7 @@
       "Add troubleshooting guide for common issues",
       "Update installation instructions"
     ],
-    "passes": false,
-    "notes": "Include examples for playlists, channels, and various language options"
+    "passes": true,\n    \"notes\": \"Include examples for playlists, channels, and various language options\"
   },
   {
     "id": "YT-010",
