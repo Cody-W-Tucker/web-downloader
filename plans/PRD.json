@@ -14,23 +14,23 @@
      "passes": true,
      "notes": "Dependencies: langchain, langchain-community, youtube-transcript-api, pytube, google-api-python-client, python-dotenv"
    },
-  {
-    "id": "YT-002",
-    "category": "functional",
-    "priority_hint": "P1",
-    "description": "Implement YouTubePlaylistHandler for playlist and channel processing",
-    "steps": [
-      "Create src/youtube_playlist_handler.py module",
-      "Implement playlist ID extraction from YouTube URLs",
-      "Implement channel ID extraction from various URL formats",
-      "Add YouTube Data API client initialization",
-      "Implement get_videos_from_playlist() method with pagination",
-      "Implement get_videos_from_channel() method",
-      "Add video metadata extraction (title, description, stats)"
-    ],
-    "passes": false,
-    "notes": "Handle different URL formats: direct IDs, custom URLs (@handle), user URLs, channel URLs"
-  },
+   {
+     "id": "YT-002",
+     "category": "functional",
+     "priority_hint": "P1",
+     "description": "Implement YouTubePlaylistHandler for playlist and channel processing",
+     "steps": [
+       "Create src/youtube_playlist_handler.py module",
+       "Implement playlist ID extraction from YouTube URLs",
+       "Implement channel ID extraction from various URL formats",
+       "Add YouTube Data API client initialization",
+       "Implement get_videos_from_playlist() method with pagination",
+       "Implement get_videos_from_channel() method",
+       "Add video metadata extraction (title, description, stats)"
+     ],
+     "passes": true,
+     "notes": "Handle different URL formats: direct IDs, custom URLs (@handle), user URLs, channel URLs"
+   },
   {
     "id": "YT-003",
     "category": "functional",
