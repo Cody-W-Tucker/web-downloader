@@ -1,19 +1,19 @@
 [
-  {
-    "id": "YT-001",
-    "category": "technical",
-    "priority_hint": "P1",
-    "description": "Set up development environment with YouTube transcript dependencies",
-    "steps": [
-      "Update requirements.txt with LangChain, YouTube API, and related packages",
-      "Update flake.nix to include new Python dependencies",
-      "Create .env.example with YouTube API key configuration",
-      "Install dependencies and verify environment setup",
-      "Run basic import tests for new packages"
-    ],
-    "passes": false,
-    "notes": "Dependencies: langchain, langchain-community, youtube-transcript-api, pytube, google-api-python-client, python-dotenv"
-  },
+   {
+     "id": "YT-001",
+     "category": "technical",
+     "priority_hint": "P1",
+     "description": "Set up development environment with YouTube transcript dependencies",
+     "steps": [
+       "Update requirements.txt with LangChain, YouTube API, and related packages",
+       "Update flake.nix to include new Python dependencies",
+       "Create .env.example with YouTube API key configuration",
+       "Install dependencies and verify environment setup",
+       "Run basic import tests for new packages"
+     ],
+     "passes": true,
+     "notes": "Dependencies: langchain, langchain-community, youtube-transcript-api, pytube, google-api-python-client, python-dotenv"
+   },
   {
     "id": "YT-002",
     "category": "functional",
