@@ -10,7 +10,7 @@ from datetime import datetime
 
 try:
     from langchain_community.document_loaders import YoutubeLoader
-except ImportError as e:
+except ImportError:
     raise ImportError(
         "langchain-community not installed. Run 'pip install langchain-community'"
     )
