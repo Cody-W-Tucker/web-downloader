@@ -1,0 +1,199 @@
+[
+  {
+    "id": "YT-001",
+    "category": "technical",
+    "priority_hint": "P1",
+    "description": "Set up development environment with YouTube transcript dependencies",
+    "steps": [
+      "Update requirements.txt with LangChain, YouTube API, and related packages",
+      "Update flake.nix to include new Python dependencies",
+      "Create .env.example with YouTube API key configuration",
+      "Install dependencies and verify environment setup",
+      "Run basic import tests for new packages"
+    ],
+    "passes": false,
+    "notes": "Dependencies: langchain, langchain-community, youtube-transcript-api, pytube, google-api-python-client, python-dotenv"
+  },
+  {
+    "id": "YT-002",
+    "category": "functional",
+    "priority_hint": "P1",
+    "description": "Implement YouTubePlaylistHandler for playlist and channel processing",
+    "steps": [
+      "Create src/youtube_playlist_handler.py module",
+      "Implement playlist ID extraction from YouTube URLs",
+      "Implement channel ID extraction from various URL formats",
+      "Add YouTube Data API client initialization",
+      "Implement get_videos_from_playlist() method with pagination",
+      "Implement get_videos_from_channel() method",
+      "Add video metadata extraction (title, description, stats)"
+    ],
+    "passes": false,
+    "notes": "Handle different URL formats: direct IDs, custom URLs (@handle), user URLs, channel URLs"
+  },
+  {
+    "id": "YT-003",
+    "category": "functional",
+    "priority_hint": "P1",
+    "description": "Implement TranscriptProcessor for LangChain integration",
+    "steps": [
+      "Create src/transcript_processor.py module",
+      "Implement load_transcript() using LangChain's YoutubeLoader",
+      "Add support for multiple language preferences",
+      "Add translation functionality",
+      "Implement _format_transcript() for timestamp and content formatting",
+      "Create format_transcript_as_markdown() method",
+      "Add error handling for videos without transcripts"
+    ],
+    "passes": false,
+    "notes": "Use langchain_community.document_loaders.YoutubeLoader with add_video_info=True"
+  },
+  {
+    "id": "YT-004",
+    "category": "functional",
+    "priority_hint": "P1",
+    "description": "Extend FileManager for YouTube-specific output handling",
+    "steps": [
+      "Add save_youtube_transcript() method to FileManager class",
+      "Implement channel-based directory structure creation",
+      "Add filename sanitization for video titles and IDs",
+      "Include YouTube metadata in Markdown frontmatter",
+      "Handle special characters in channel names and video titles",
+      "Ensure proper UTF-8 encoding for international content"
+    ],
+    "passes": false,
+    "notes": "Output structure: Channel Name/Video Title-VIDEO_ID.md"
+  },
+  {
+    "id": "YT-005",
+    "category": "functional",
+    "priority_hint": "P1",
+    "description": "Add YouTube CLI arguments and workflow to main.py",
+    "steps": [
+      "Add --youtube-playlist argument to argument parser",
+      "Add --youtube-channel argument",
+      "Add --language and --translate-to arguments",
+      "Add --youtube-api-key argument",
+      "Create process_youtube_url() function for playlist/channel processing",
+      "Implement YouTube-specific workflow branch in main()",
+      "Add progress reporting with tqdm for batch operations",
+      "Maintain backward compatibility with existing web crawling"
+    ],
+    "passes": false,
+    "notes": "Language defaults to 'en', supports comma-separated language preferences"
+  },
+  {
+    "id": "YT-006",
+    "category": "functional",
+    "priority_hint": "P2",
+    "description": "Implement comprehensive error handling and logging",
+    "steps": [
+      "Add error handling for missing YouTube API key",
+      "Handle invalid YouTube URLs gracefully",
+      "Add logging for videos without available transcripts",
+      "Implement retry logic for API failures",
+      "Add warnings for quota limit approaches",
+      "Handle network timeouts and connection errors",
+      "Provide clear error messages to users"
+    ],
+    "passes": false,
+    "notes": "Use logging module consistently across all new modules"
+  },
+  {
+    "id": "YT-007",
+    "category": "functional",
+    "priority_hint": "P2",
+    "description": "Create integration tests for end-to-end functionality",
+    "steps": [
+      "Create test_youtube_integration.py with integration tests",
+      "Test playlist processing with sample playlist",
+      "Test channel processing with sample channel",
+      "Verify output format matches specifications",
+      "Test language selection and translation",
+      "Test error handling for edge cases",
+      "Verify directory structure and file naming"
+    ],
+    "passes": false,
+    "notes": "Use test constants for sample YouTube URLs, avoid real API calls in CI"
+  },
+  {
+    "id": "YT-008",
+    "category": "technical",
+    "priority_hint": "P2",
+    "description": "Add performance optimizations for large playlists",
+    "steps": [
+      "Implement pagination handling for playlists >50 videos",
+      "Add caching for API responses to reduce quota usage",
+      "Implement concurrent processing for multiple videos",
+      "Add memory-efficient processing for long transcripts",
+      "Optimize file I/O operations",
+      "Add progress tracking with ETA calculations"
+    ],
+    "passes": false,
+    "notes": "Consider using asyncio or threading for concurrent transcript fetching"
+  },
+  {
+    "id": "YT-009",
+    "category": "technical",
+    "priority_hint": "P2",
+    "description": "Update documentation and user guides",
+    "steps": [
+      "Update README.md with YouTube transcript usage examples",
+      "Add YouTube-specific sections to documentation",
+      "Create usage examples for different scenarios",
+      "Document API key setup process",
+      "Add troubleshooting guide for common issues",
+      "Update installation instructions"
+    ],
+    "passes": false,
+    "notes": "Include examples for playlists, channels, and various language options"
+  },
+  {
+    "id": "YT-010",
+    "category": "functional",
+    "priority_hint": "P1",
+    "description": "Test with real YouTube content and validate output quality",
+    "steps": [
+      "Test with real YouTube playlist (small, <10 videos)",
+      "Test with real YouTube channel (small, <10 videos)",
+      "Verify transcript accuracy and formatting",
+      "Test with videos in different languages",
+      "Validate Markdown output structure and metadata",
+      "Check timestamp formatting and readability",
+      "Ensure proper handling of special characters"
+    ],
+    "passes": false,
+    "notes": "Manual testing phase - requires valid YouTube API key"
+  },
+  {
+    "id": "YT-011",
+    "category": "functional",
+    "priority_hint": "P3",
+    "description": "Add support for additional YouTube URL formats",
+    "steps": [
+      "Support youtu.be short URLs",
+      "Handle playlist URLs with additional parameters",
+      "Support channel URLs with /videos suffix",
+      "Add validation for watch?v= URLs",
+      "Handle international YouTube domains if needed"
+    ],
+    "passes": false,
+    "notes": "Edge case handling for various YouTube URL formats users might provide"
+  },
+  {
+    "id": "YT-012",
+    "category": "technical",
+    "priority_hint": "P3",
+    "description": "Implement configuration management and validation",
+    "steps": [
+      "Add environment variable validation",
+      "Implement configuration file loading (.env)",
+      "Add API key format validation",
+      "Create configuration class for YouTube settings",
+      "Add default value handling",
+      "Implement configuration override via CLI"
+    ],
+    "passes": false,
+    "notes": "Use python-dotenv for environment variable management"
+  }
+]
