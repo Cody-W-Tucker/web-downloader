@@ -61,11 +61,7 @@
       "Handle special characters in channel names and video titles",
       "Ensure proper UTF-8 encoding for international content"
     ],
-    "passes": false,
-    "notes": "Output structure: Channel Name/Video Title-VIDEO_ID.md"
-  },
-  {
-    "id": "YT-005",
+    "passes": true,\n    "notes": "Output structure: Channel Name/Video Title-VIDEO_ID.md"\n  },\n  {\n    "id": "YT-005",
     "category": "functional",
     "priority_hint": "P1",
     "description": "Add YouTube CLI arguments and workflow to main.py",

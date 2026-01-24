@@ -127,20 +127,21 @@ class FileManager:
         Returns:
             str: Sanitized filename
         """
-        # Replace invalid characters with underscore
-        sanitized = re.sub(r'[\\/*?:"<>|]', '_', filename)
+        # Replace invalid filesystem characters with underscore
+        sanitized = re.sub(r'[\\/:*?"<>|]', '_', filename)
         
-        # Handle dots and spaces
-        sanitized = sanitized.replace(' ', '_')
+        # Collapse whitespace and underscores
+        sanitized = re.sub(r'\s+', '_', sanitized.strip())
         
-        # Handle cases where the filename might still be invalid
+        # Remove leading/trailing dots and underscores
+        sanitized = re.sub(r'^[._]+|[._]+$', '', sanitized)
+        sanitized = re.sub(r'_+', '_', sanitized)
+        
+        # Handle empty or invalid cases
         if not sanitized or sanitized in ('.', '..'):
-            sanitized = 'index'
+            sanitized = 'unnamed'
         
-        # Handle non-ASCII characters if needed
-        sanitized = ''.join(c for c in sanitized if c.isascii() or c.isalnum() or c in '-_.')
-        
-        # Truncate if too long (most filesystems have limits)
+        # Truncate to safe length
         if len(sanitized) > 200:
             sanitized = sanitized[:200]
         
@@ -271,6 +272,54 @@ class FileManager:
             logger.error(f"Error saving Markdown for {url}: {str(e)}")
             return None
     
+    def save_youtube_transcript(self, video_info: dict, markdown_content: str) -> str | None:
+        """
+        Save YouTube transcript Markdown using channel-based directory structure.
+        
+        Args:
+            video_info (dict): Video metadata from YouTubePlaylistHandler
+            markdown_content (str): Formatted Markdown content from TranscriptProcessor
+            
+        Returns:
+            str | None: Path to saved file or None if failed
+        """
+        logger = logging.getLogger(__name__)
+        try:
+            channel_title = video_info.get('channel_title', 'Unknown Channel')
+            video_title = video_info.get('title', 'Untitled Video')
+            video_id = video_info.get('video_id')
+            if not video_id:
+                logger.error("No video_id in video_info")
+                return None
+            
+            sanitized_channel = self._sanitize_filename(channel_title)
+            sanitized_title = self._sanitize_filename(video_title)
+            filename = f"{sanitized_title}-{video_id}.md"
+            
+            directory = os.path.join(self.output_dir, sanitized_channel)
+            if not self._create_directory(directory):
+                logger.error(f"Failed to create directory: {directory}")
+                return None
+            
+            filepath = os.path.join(directory, filename)
+            
+            # Use video URL for conflict resolution
+            yt_url = f"https://www.youtube.com/watch?v={video_id}"
+            
+            # Handle naming conflicts
+            filepath = self._handle_naming_conflict(filepath, yt_url, markdown_content)
+            
+            # Write file with UTF-8 encoding
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(markdown_content)
+            
+            logger.info(f"Saved YouTube transcript: {filepath}")
+            return filepath
+        
+        except Exception as e:
+            logger.error(f"Error saving YouTube transcript for {video_id or 'unknown'}: {str(e)}")
+            return None
+    
     def _handle_naming_conflict(self, filepath, url, content_with_frontmatter):
         """
         Handle naming conflicts by checking if the existing file is from the same URL.
@@ -299,8 +348,9 @@ class FileManager:
             existing_frontmatter, _ = self._extract_frontmatter(existing_content)
             
             # If there's frontmatter and the source URL matches (ignoring trailing slashes)
-            if (existing_frontmatter and 'source_url' in existing_frontmatter and 
-                self._normalize_url(existing_frontmatter['source_url']) == normalized_new_url):
+            source_url = (existing_frontmatter.get('source_url') or 
+                          existing_frontmatter.get('youtube_url')) if existing_frontmatter else None
+            if source_url and self._normalize_url(source_url) == normalized_new_url:
                 # It's an update to the same page, just overwrite
                 logger.debug(f"Updating existing file {filepath} from same URL")
                 return filepath
@@ -324,8 +374,9 @@ class FileManager:
                 
                 numbered_frontmatter, _ = self._extract_frontmatter(numbered_content)
                 
-                if (numbered_frontmatter and 'source_url' in numbered_frontmatter and 
-                    self._normalize_url(numbered_frontmatter['source_url']) == normalized_new_url):
+                source_url = (numbered_frontmatter.get('source_url') or 
+                              numbered_frontmatter.get('youtube_url')) if numbered_frontmatter else None
+                if source_url and self._normalize_url(source_url) == normalized_new_url:
                     # Found a match with an existing numbered version, update it
                     logger.debug(f"Updating existing numbered file {new_filepath} from same URL")
                     return new_filepath
