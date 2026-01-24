@@ -45,8 +45,7 @@
       "Create format_transcript_as_markdown() method",
       "Add error handling for videos without transcripts"
     ],
-    "passes": false,
-    "notes": "Use langchain_community.document_loaders.YoutubeLoader with add_video_info=True"
+    "passes": true,\n    "notes": "Use langchain_community.document_loaders.YoutubeLoader with add_video_info=True"
   },
   {
     "id": "YT-004",
@@ -75,8 +74,7 @@
       "Add progress reporting with tqdm for batch operations",
       "Maintain backward compatibility with existing web crawling"
     ],
-    "passes": false,
-    "notes": "Language defaults to 'en', supports comma-separated language preferences"
+    "passes": true,\n    "notes": "Language defaults to 'en', supports comma-separated language preferences"
   },
   {
     "id": "YT-006",

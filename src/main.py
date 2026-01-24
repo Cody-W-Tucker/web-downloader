@@ -15,6 +15,7 @@ import os
 import sys
 from datetime import datetime
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 # Try relative imports (when used as a module)
 try:
@@ -24,6 +25,8 @@ try:
     from .content_extractor import ContentExtractor
     from .markdown_converter import convert_html_to_markdown
     from .file_manager import FileManager
+    from .youtube_playlist_handler import YouTubePlaylistHandler
+    from .transcript_processor import TranscriptProcessor
 # Fall back to absolute imports (when run directly)
 except ImportError:
     from robots_parser import RobotsHandler
@@ -32,6 +35,9 @@ except ImportError:
     from content_extractor import ContentExtractor
     from markdown_converter import convert_html_to_markdown
     from file_manager import FileManager
+    from youtube_playlist_handler import YouTubePlaylistHandler
+    from transcript_processor import TranscriptProcessor
+    from dotenv import load_dotenv
 
 
 def setup_logging(log_level=logging.INFO):
@@ -80,7 +86,9 @@ def parse_arguments():
     
     parser.add_argument(
         "url",
-        help="Root URL of the website to extract"
+        nargs='?',
+        default=None,
+        help="Root URL of the website to extract (required for web mode)"
     )
     
     parser.add_argument(
@@ -128,6 +136,28 @@ def parse_arguments():
         "--user-agent",
         default="WebToMarkdown/1.0",
         help="Custom user agent string"
+    )
+    
+    parser.add_argument(
+        "--youtube-playlist",
+        help="YouTube playlist URL"
+    )
+    parser.add_argument(
+        "--youtube-channel",
+        help="YouTube channel URL or ID"
+    )
+    parser.add_argument(
+        "--language",
+        default="en",
+        help="Preferred transcript languages, comma-separated (default: en)"
+    )
+    parser.add_argument(
+        "--translate-to",
+        help="Translate to this language (ISO code)"
+    )
+    parser.add_argument(
+        "--youtube-api-key",
+        help="YouTube Data API v3 key (or use YOUTUBE_API_KEY env var)"
     )
     
     parser.add_argument(
@@ -230,8 +260,8 @@ def main():
     # Configure logging based on verbosity
     log_level = configure_log_level(args.verbose)
     logger = setup_logging(log_level=log_level)
+    load_dotenv()
     
-    # Only show these informational messages if verbose mode is enabled
     if args.verbose > 0:
         logger.info(f"Starting extraction from URL: {args.url}")
         logger.info(f"Output directory: {args.output_dir}")
@@ -241,21 +271,85 @@ def main():
         logger.info(f"Respect robots.txt: {args.respect_robots}")
         logger.info(f"User agent: {args.user_agent}")
     
-    # Initialize the session
-    session = RateLimitedSession(
-        delay=args.delay,
-        max_delay=args.max_delay,
-        respect_robots=args.respect_robots,
-        user_agent=args.user_agent
-    )
-    
-    # Initialize other components
-    content_extractor = ContentExtractor()
-    file_manager = FileManager(output_dir=args.output_dir)
-    
-    # Try to extract URLs from sitemap first
-    logger.info("Attempting to extract URLs from sitemap...")
-    urls = extract_sitemap_urls_recursive(session, args.url)
+    if args.youtube_playlist or args.youtube_channel:
+        # YouTube workflow
+        youtube_url = args.youtube_playlist or args.youtube_channel
+        api_key = args.youtube_api_key or os.getenv('YOUTUBE_API_KEY')
+        if not api_key:
+            logger.error("YouTube API key required (--youtube-api-key or YOUTUBE_API_KEY env var)")
+            sys.exit(1)
+        
+        languages = [l.strip() for l in args.language.split(',')]
+        translate_to = args.translate_to
+        
+        logger.info(f"Processing YouTube {'playlist' if args.youtube_playlist else 'channel'}: {youtube_url}")
+        
+        handler = YouTubePlaylistHandler(api_key)
+        
+        playlist_id = handler.extract_playlist_id(youtube_url)
+        channel_id = handler.extract_channel_id(youtube_url)
+        
+        if playlist_id:
+            videos = handler.get_videos_from_playlist(playlist_id)
+        elif channel_id:
+            videos = handler.get_videos_from_channel(channel_id)
+        else:
+            logger.error(f"Could not extract playlist or channel ID from: {youtube_url}")
+            sys.exit(1)
+        
+        if not videos:
+            logger.info("No videos found.")
+            sys.exit(0)
+        
+        file_manager = FileManager(output_dir=args.output_dir)
+        
+        successful = 0
+        total = len(videos)
+        with tqdm(total=total, desc="Processing videos", unit="vid") as pbar:
+            for video in videos:
+                try:
+                    video_url = f"https://www.youtube.com/watch?v={video['video_id']}"
+                    processor = TranscriptProcessor()
+                    docs = processor.load_transcript(video_url, language=languages, translation=translate_to)
+                    
+                    if docs:
+                        markdown = processor.format_transcript_as_markdown(docs, video_info=video)
+                        filepath = file_manager.save_youtube_transcript(video, markdown)
+                        if filepath:
+                            logger.info(f"Saved: {video['title']} -> {filepath}")
+                            successful += 1
+                        else:
+                            logger.warning(f"Failed to save: {video['title']}")
+                    else:
+                        logger.warning(f"No transcript available: {video['title']}")
+                    
+                    pbar.update(1)
+                except Exception as e:
+                    logger.error(f"Error processing {video.get('title', 'unknown')}: {str(e)}")
+        
+        logger.info(f"YouTube processing complete: {successful}/{total} videos saved.")
+        print(f"\nYouTube processing complete: {successful}/{total} videos")
+        print(f"Output directory: {os.path.abspath(args.output_dir)}")
+    else:
+        if args.url is None:
+            logger.error("URL required for web crawling mode.")
+            sys.exit(1)
+        
+        # Initialize the session
+        session = RateLimitedSession(
+            delay=args.delay,
+            max_delay=args.max_delay,
+            respect_robots=args.respect_robots,
+            user_agent=args.user_agent
+        )
+        
+        # Initialize other components
+        content_extractor = ContentExtractor()
+        file_manager = FileManager(output_dir=args.output_dir)
+        
+        # Try to extract URLs from sitemap first
+        logger.info("Attempting to extract URLs from sitemap...")
+        urls = extract_sitemap_urls_recursive(session, args.url)
     
     # If sitemap doesn't exist or doesn't have any URLs, fall back to crawling
     if not urls and not args.sitemap_only:

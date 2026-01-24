@@ -21,3 +21,8 @@
 - Verification: Added tests/test_transcript_processor.py (7 unit tests with mocks), ./scripts/verify.sh passes.
 - Gotchas: Verify.sh detects as unknown project (no requirements.txt?), but git clean. Loader returns empty on no transcript.
 - Next: YT-004 Extend FileManager for YouTube-specific output handling
+[2026-01-24 14:47] Completed: YT-005 Add YouTube CLI arguments and workflow to main.py
+- What: Added argparse options --youtube-playlist/--channel/--language/--translate-to/--youtube-api-key. Implemented YouTube workflow in main() integrating PlaylistHandler, TranscriptProcessor, FileManager; tqdm progress; backward compatible.
+- Verification: ./scripts/verify.sh passes; python -m src.main --help shows args; syntax/imports ok.
+- Gotchas: verify.sh unknown project (no requirements.txt/pyproject.toml); pytest not in nix shell?; LSP scope warnings (functional).
+- Next: YT-006 error handling
