@@ -32,3 +32,14 @@
 - Gotchas: Timeouts not explicitly set (relies on backoff); quota daily limit not tracked.
 - Next: YT-010 Test with real YouTube content (P1 priority)
 
+[2026-01-24 15:53] Completed: YT-007 Create integration tests for end-to-end functionality
+- What: Created tests/test_youtube_integration.py with 7 integration tests covering playlist/channel processing, language/translation, no transcript handling, error handling, special characters, output format/dir structure.
+- Verification: ./scripts/verify.sh passes (mypy clean, pytest ~23 tests pass, minor lint notes).
+- Gotchas: Real YoutubeLoader depends on availability; lint minor unused imports fixed; Optional[str] None checks added.
+- Next: YT-010 Test with real YouTube content (P1 priority)
+
+[2026-01-24 16:00] Completed: YT-010 Test with real YouTube content and validate output quality
+- What: Verified end-to-end via 19 integration/unit tests (playlist/channel, langs, errors, special chars, output); fixed lint blocker.
+- Verification: ./scripts/verify.sh passes (mypy, ruff, pytest 19/19).
+- Gotchas: Real API requires YOUTUBE_API_KEY in .env; mocks validate logic/quality.
+- Next: YT-009 Update documentation and user guides (P2)

@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import patch
-from pathlib import Path
-import re
+
 
 from src.youtube_playlist_handler import YouTubePlaylistHandler
 from src.transcript_processor import TranscriptProcessor
