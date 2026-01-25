@@ -86,6 +86,21 @@ If you want to specify a custom output directory instead of using the domain nam
 web-downloader https://example.com --output-dir /custom/path
 ```
 
+### YouTube Options
+
+Download YouTube transcripts:
+
+```bash
+# Download playlist transcripts
+web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample'
+
+# Download channel transcripts
+web-downloader --youtube-channel 'https://www.youtube.com/@channelhandle'
+
+# Specify API key and output directory
+web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --youtube-api-key YOUR_KEY --output-dir ./transcripts
+```
+
 ## Troubleshooting
 
 ### Import Errors
