@@ -46,7 +46,10 @@ class YouTubePlaylistHandler:
         """
         try:
             parsed = urlparse(url)
-            if "youtube.com" in parsed.netloc or "youtu.be" in parsed.netloc:
+            if (
+                "youtube" in parsed.netloc.lower()
+                or "youtu.be" in parsed.netloc.lower()
+            ):
                 query = parse_qs(parsed.query)
                 if "list" in query:
                     playlist_id = query["list"][0]
@@ -70,6 +73,11 @@ class YouTubePlaylistHandler:
         """
         try:
             parsed = urlparse(url)
+            if not (
+                "youtube" in parsed.netloc.lower()
+                or "youtu.be" in parsed.netloc.lower()
+            ):
+                return None
             path = parsed.path
 
             # Direct channel ID: /channel/UC...
@@ -100,6 +108,36 @@ class YouTubePlaylistHandler:
         except Exception as e:
             self.logger.warning(f"Error extracting channel ID from {url}: {e}")
 
+        return None
+
+    def extract_video_id(self, url):
+        """
+        Extract video ID from YouTube video URL.
+
+        Args:
+            url (str): YouTube video URL
+
+        Returns:
+            str or None: Video ID if found, None otherwise
+        """
+        try:
+            parsed = urlparse(url)
+            if (
+                "youtube" in parsed.netloc.lower()
+                or "youtu.be" in parsed.netloc.lower()
+            ):
+                query = parse_qs(parsed.query)
+                if "v" in query:
+                    video_id = query["v"][0]
+                    if re.match(r"^[a-zA-Z0-9_-]{11}$", video_id):
+                        return video_id
+                path = parsed.path.strip("/")
+                if parsed.netloc.lower() == "youtu.be" and path:
+                    video_id = path.split("?")[0]
+                    if re.match(r"^[a-zA-Z0-9_-]{11}$", video_id):
+                        return video_id
+        except Exception as e:
+            self.logger.warning(f"Error extracting video ID from {url}: {e}")
         return None
 
     def _resolve_channel_id_from_handle(self, handle):
@@ -286,7 +324,31 @@ class YouTubePlaylistHandler:
 
             if "items" not in response or not response["items"]:
                 self.logger.warning(f"No channel found for ID {channel_id}")
-                return []
+        return []
+
+    def get_video_metadata(self, video_id):
+        """
+        Retrieve metadata for a single YouTube video.
+        """
+        try:
+            request = self.youtube.videos().list(
+                part="snippet",
+                id=video_id
+            )
+            response = self._execute_with_retry(request)
+            if "items" in response and response["items"]:
+                snippet = response["items"][0].get("snippet", {})
+                return {
+                    "video_id": video_id,
+                    "title": snippet.get("title", ""),
+                    "description": snippet.get("description", ""),
+                    "published_at": snippet.get("publishedAt", ""),
+                    "channel_title": snippet.get("channelTitle", ""),
+                    "thumbnails": snippet.get("thumbnails", {})
+                }
+        except Exception as e:
+            self.logger.error(f"Error fetching metadata for {video_id}: {e}")
+        return None
 
             uploads_playlist_id = response["items"][0]["contentDetails"][
                 "relatedPlaylists"
@@ -301,3 +363,27 @@ class YouTubePlaylistHandler:
             self.logger.error(f"Error getting channel {channel_id}: {e}")
 
         return []
+
+    def get_video_metadata(self, video_id):
+        """
+        Retrieve metadata for a single YouTube video.
+        """
+        try:
+            request = self.youtube.videos().list(
+                part="snippet",
+                id=video_id
+            )
+            response = self._execute_with_retry(request)
+            if "items" in response and response["items"]:
+                snippet = response["items"][0].get("snippet", {})
+                return {
+                    "video_id": video_id,
+                    "title": snippet.get("title", ""),
+                    "description": snippet.get("description", ""),
+                    "published_at": snippet.get("publishedAt", ""),
+                    "channel_title": snippet.get("channelTitle", ""),
+                    "thumbnails": snippet.get("thumbnails", {})
+                }
+        except Exception as e:
+            self.logger.error(f"Error fetching metadata for {video_id}: {e}")
+        return None

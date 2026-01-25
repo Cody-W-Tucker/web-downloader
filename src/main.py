@@ -243,21 +243,24 @@ def process_single_video(video, languages, translate_to, output_dir, logger):
     file_manager = FileManager(output_dir=output_dir)
     video_url = f"https://www.youtube.com/watch?v={video['video_id']}"
     try:
-        docs = processor.load_transcript(video_url, language=languages, translation=translate_to)
+        docs = processor.load_transcript(
+            video_url, language=languages, translation=translate_to
+        )
         if not docs:
             logger.warning(f"No transcript available: {video['title']}")
-            return False, video['title']
+            return False, video["title"]
         markdown = processor.format_transcript_as_markdown(docs, video_info=video)
         filepath = file_manager.save_youtube_transcript(video, markdown)
         if filepath:
             logger.info(f"Saved: {video['title']} -> {filepath}")
-            return True, video['title']
+            return True, video["title"]
         else:
             logger.warning(f"Failed to save: {video['title']}")
-            return False, video['title']
+            return False, video["title"]
     except Exception as e:
         logger.error(f"Error processing {video.get('title', 'unknown')}: {str(e)}")
-        return False, video['title']
+        return False, video["title"]
+
 
 def main():
     """Main entry point of the application."""
@@ -299,14 +302,22 @@ def main():
 
         playlist_id = handler.extract_playlist_id(youtube_url)
         channel_id = handler.extract_channel_id(youtube_url)
+        video_id = handler.extract_video_id(youtube_url)
 
         if playlist_id:
             videos = handler.get_videos_from_playlist(playlist_id)
         elif channel_id:
             videos = handler.get_videos_from_channel(channel_id)
+        elif video_id:
+            video = handler.get_video_metadata(video_id)
+            if video:
+                videos = [video]
+            else:
+                logger.error(f"Could not fetch metadata for video ID: {video_id}")
+                sys.exit(1)
         else:
             logger.error(
-                f"Could not extract playlist or channel ID from: {youtube_url}"
+                f"Could not extract playlist, channel, or video ID from: {youtube_url}"
             )
             sys.exit(1)
 
@@ -369,14 +380,13 @@ def main():
         logger.info("Attempting to extract URLs from sitemap...")
         urls = extract_sitemap_urls_recursive(session, args.url)
 
-            # If sitemap doesn't exist or doesn't have any URLs, fall back to crawling
         if not urls and not args.sitemap_only:
-        logger.info(
-            "No sitemap found or no URLs in sitemap. Falling back to recursive crawling..."
-        )
-        crawler = WebCrawler(args.url, session, max_depth=args.depth)
-        url_content_map = crawler.crawl()
-        urls = list(url_content_map.keys())
+            logger.info(
+                "No sitemap found or no URLs in sitemap. Falling back to recursive crawling..."
+            )
+            crawler = WebCrawler(args.url, session, max_depth=args.depth)
+            url_content_map = crawler.crawl()
+            urls = list(url_content_map.keys())
 
     if not urls:
         logger.error(

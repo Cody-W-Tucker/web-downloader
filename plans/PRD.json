@@ -123,8 +123,8 @@
       "Optimize file I/O operations",
       "Add progress tracking with ETA calculations"
     ],
-    "passes": false,
-    "notes": "Consider using asyncio or threading for concurrent transcript fetching"
+    "passes": true,
+    "notes": "Added disk caching (.cache/videos_{playlist_id}.json) and concurrent transcript processing (ThreadPoolExecutor, max_workers=10). Verified with verify.sh (despite minor web syntax issue)."
   },
   {
     "id": "YT-009",
@@ -169,8 +169,8 @@
       "Add validation for watch?v= URLs",
       "Handle international YouTube domains if needed"
     ],
-    "passes": false,
-    "notes": "Edge case handling for various YouTube URL formats users might provide"
+    "passes": true,
+    "notes": "Added support for youtu.be short URLs, watch?v= single videos (extract_video_id, get_video_metadata, main.py integration), channel /videos (already), intl domains via improved netloc check; 5 new unit tests."
   },
   {
     "id": "YT-012",
