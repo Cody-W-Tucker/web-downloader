@@ -15,27 +15,12 @@ import os
 import sys
 from tqdm import tqdm
 from dotenv import load_dotenv
-import concurrent.futures
 
-# Try relative imports (when used as a module)
-try:
-    from .crawler import RateLimitedSession, WebCrawler
-    from .sitemap_parser import extract_sitemap_urls_recursive
-    from .content_extractor import ContentExtractor
-    from .markdown_converter import convert_html_to_markdown
-    from .file_manager import FileManager
-    from .youtube_playlist_handler import YouTubePlaylistHandler
-    from .transcript_processor import TranscriptProcessor
-# Fall back to absolute imports (when run directly)
-except ImportError:
-    from crawler import RateLimitedSession, WebCrawler  # type: ignore[import-not-found, no-redef]
-    from sitemap_parser import extract_sitemap_urls_recursive  # type: ignore[import-not-found, no-redef]
-    from content_extractor import ContentExtractor  # type: ignore[import-not-found, no-redef]
-    from markdown_converter import convert_html_to_markdown  # type: ignore[import-not-found, no-redef]
-    from file_manager import FileManager  # type: ignore[import-not-found, no-redef]
-    from youtube_playlist_handler import YouTubePlaylistHandler  # type: ignore[import-not-found, no-redef]
-    from transcript_processor import TranscriptProcessor  # type: ignore[import-not-found, no-redef]
-    from dotenv import load_dotenv  # type: ignore[import-not-found]
+from .crawler import RateLimitedSession, WebCrawler
+from .sitemap_parser import extract_sitemap_urls_recursive
+from .content_extractor import ContentExtractor
+from .markdown_converter import convert_html_to_markdown
+from .file_manager import FileManager
 
 
 def setup_logging(log_level=logging.INFO):
@@ -175,6 +160,12 @@ def configure_log_level(verbosity):
         return logging.DEBUG
 
 
+class ProcessingError(Exception):
+    """Raised when URL processing fails."""
+
+    pass
+
+
 def process_url(url, session, content_extractor, file_manager):
     """
     Process a single URL: extract content, convert to Markdown, and save to file.
@@ -186,80 +177,63 @@ def process_url(url, session, content_extractor, file_manager):
         file_manager (FileManager): Manager for saving files
 
     Returns:
-        bool: True if successful, False otherwise
+        str: Path to saved file
+
+    Raises:
+        ProcessingError: If any step in processing fails
     """
     logger = logging.getLogger(__name__)
 
     try:
         # Fetch the page
         response = session.get(url)
-        if not response or not hasattr(response, "text") or not response.text:
-            logger.info(f"No response or empty content from {url}")
-            return False
+        if not response.text:
+            raise ProcessingError(f"No content from {url}")
 
         html_content = response.text
 
         # Extract content and metadata
         metadata, cleaned_content = content_extractor.extract_content(html_content, url)
-
         if not cleaned_content:
-            logger.info(f"No content extracted from {url}")
-            return False
+            raise ProcessingError(f"No content extracted from {url}")
 
         # Convert to Markdown
         markdown = convert_html_to_markdown(cleaned_content, metadata)
-
         if not markdown:
-            logger.info(f"Failed to convert content from {url} to Markdown")
-            return False
+            raise ProcessingError(f"Failed to convert content from {url} to Markdown")
 
         # Save to file
         filepath = file_manager.save_markdown(markdown, url)
-
         if not filepath:
-            logger.info(f"Failed to save Markdown for {url}")
-            return False
+            raise ProcessingError(f"Failed to save Markdown for {url}")
 
         logger.info(f"Successfully processed {url} -> {filepath}")
-        return True
+        return filepath
 
     except Exception as e:
-        logger.error(f"Error processing {url}: {str(e)}")
-        import traceback
-
-        logger.debug(f"Traceback: {traceback.format_exc()}")
-        return False
-
-
-def process_single_video(video, languages, translate_to, output_dir, logger):
-    """Process a single YouTube video concurrently."""
-    processor = TranscriptProcessor()
-    file_manager = FileManager(output_dir=output_dir)
-    video_url = f"https://www.youtube.com/watch?v={video['video_id']}"
-    try:
-        docs = processor.load_transcript(
-            video_url, language=languages, translation=translate_to
-        )
-        if not docs:
-            logger.warning(f"No transcript available: {video['title']}")
-            return False, video["title"]
-        markdown = processor.format_transcript_as_markdown(docs, video_info=video)
-        filepath = file_manager.save_youtube_transcript(video, markdown)
-        if filepath:
-            logger.info(f"Saved: {video['title']} -> {filepath}")
-            return True, video["title"]
+        if isinstance(e, ProcessingError):
+            logger.info(str(e))
         else:
-            logger.warning(f"Failed to save: {video['title']}")
-            return False, video["title"]
-    except Exception as e:
-        logger.error(f"Error processing {video.get('title', 'unknown')}: {str(e)}")
-        return False, video["title"]
+            logger.error(f"Error processing {url}: {str(e)}")
+        raise
 
 
 def main():
     """Main entry point of the application."""
     # Parse command line arguments
     args = parse_arguments()
+
+    # Dispatch to YouTube if YouTube args are provided
+    if args.youtube or args.youtube_channel:
+        try:
+            from . import youtube_downloader
+
+            youtube_downloader.run_youtube(args)
+        except ImportError:
+            from youtube_downloader import run_youtube  # type: ignore[import-not-found]
+
+            run_youtube(args)
+        return
 
     # Configure logging based on verbosity
     log_level = configure_log_level(args.verbose)
@@ -275,85 +249,6 @@ def main():
         logger.info(f"Respect robots.txt: {args.respect_robots}")
         logger.info(f"User agent: {args.user_agent}")
 
-    if args.youtube or args.youtube_channel:
-        # YouTube workflow
-        youtube_url = args.youtube or args.youtube_channel
-        api_key = args.youtube_api_key or os.getenv("YOUTUBE_API_KEY")
-        if not api_key:
-            logger.error(
-                "YouTube API key required (--youtube-api-key or YOUTUBE_API_KEY env var)"
-            )
-            sys.exit(1)
-
-        languages = ["en"]
-        translate_to = None
-
-        logger.info(
-            f"Processing YouTube {'playlist' if args.youtube else 'channel'}: {youtube_url}"
-        )
-
-        handler = YouTubePlaylistHandler(api_key)
-
-        playlist_id = handler.extract_playlist_id(youtube_url)
-        channel_id = handler.extract_channel_id(youtube_url)
-        video_id = handler.extract_video_id(youtube_url)
-
-        if playlist_id:
-            videos = handler.get_videos_from_playlist(playlist_id)
-        elif channel_id:
-            videos = handler.get_videos_from_channel(channel_id)
-        elif video_id:
-            video = handler.get_video_metadata(video_id)
-            if video:
-                videos = [video]
-            else:
-                logger.error(f"Could not fetch metadata for video ID: {video_id}")
-                sys.exit(1)
-        else:
-            logger.error(
-                f"Could not extract playlist, channel, or video ID from: {youtube_url}"
-            )
-            sys.exit(1)
-
-        if not videos:
-            logger.info("No videos found.")
-            sys.exit(0)
-
-        logger.info(f"Found {len(videos)} videos.")
-
-        successful = 0
-        total = len(videos)
-        max_workers = 10
-        with tqdm(total=total, desc="Processing videos", unit="vid") as pbar:
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=max_workers
-            ) as executor:
-                future_to_title = {
-                    executor.submit(
-                        process_single_video,
-                        video,
-                        languages,
-                        translate_to,
-                        args.output_dir,
-                        logger,
-                    ): video["title"]
-                    for video in videos
-                }
-                for future in concurrent.futures.as_completed(future_to_title):
-                    try:
-                        success, title = future.result()
-                        if success:
-                            successful += 1
-                        pbar.update(1)
-                    except Exception as exc:
-                        title = future_to_title[future]
-                        logger.error(f"Thread generated exception for {title}: {exc}")
-                        pbar.update(1)
-
-        logger.info(f"YouTube processing complete: {successful}/{total} videos saved.")
-        print(f"\nYouTube processing complete: {successful}/{total} videos")
-        print(f"Output directory: {os.path.abspath(args.output_dir)}")
-    else:
         if args.url is None:
             logger.error("URL required for web crawling mode.")
             sys.exit(1)
@@ -399,10 +294,10 @@ def main():
                 total=len(urls), desc="Processing URLs", unit="URL"
             ) as progress_bar:
                 for url in urls:
-                    result = process_url(url, session, content_extractor, file_manager)
-                    if result:
+                    try:
+                        process_url(url, session, content_extractor, file_manager)
                         successful += 1
-                    else:
+                    except ProcessingError:
                         failed += 1
                     progress_bar.update(1)
         except KeyboardInterrupt:

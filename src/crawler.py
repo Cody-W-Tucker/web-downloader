@@ -16,12 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-# Try relative imports (when used as a module)
-try:
-    from .robots_parser import RobotsHandler, respect_robots_delay
-# Fall back to absolute imports (when run directly)
-except ImportError:
-    from robots_parser import RobotsHandler, respect_robots_delay  # type: ignore[import-not-found, no-redef]
+from .robots_parser import RobotsHandler, respect_robots_delay
 
 logger = logging.getLogger(__name__)
 
