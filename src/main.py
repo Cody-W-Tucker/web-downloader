@@ -15,6 +15,7 @@ import os
 import sys
 from tqdm import tqdm
 from dotenv import load_dotenv
+import concurrent.futures
 
 # Try relative imports (when used as a module)
 try:
@@ -236,6 +237,28 @@ def process_url(url, session, content_extractor, file_manager):
         return False
 
 
+def process_single_video(video, languages, translate_to, output_dir, logger):
+    """Process a single YouTube video concurrently."""
+    processor = TranscriptProcessor()
+    file_manager = FileManager(output_dir=output_dir)
+    video_url = f"https://www.youtube.com/watch?v={video['video_id']}"
+    try:
+        docs = processor.load_transcript(video_url, language=languages, translation=translate_to)
+        if not docs:
+            logger.warning(f"No transcript available: {video['title']}")
+            return False, video['title']
+        markdown = processor.format_transcript_as_markdown(docs, video_info=video)
+        filepath = file_manager.save_youtube_transcript(video, markdown)
+        if filepath:
+            logger.info(f"Saved: {video['title']} -> {filepath}")
+            return True, video['title']
+        else:
+            logger.warning(f"Failed to save: {video['title']}")
+            return False, video['title']
+    except Exception as e:
+        logger.error(f"Error processing {video.get('title', 'unknown')}: {str(e)}")
+        return False, video['title']
+
 def main():
     """Main entry point of the application."""
     # Parse command line arguments
@@ -291,37 +314,36 @@ def main():
             logger.info("No videos found.")
             sys.exit(0)
 
-        file_manager = FileManager(output_dir=args.output_dir)
+        logger.info(f"Found {len(videos)} videos.")
 
         successful = 0
         total = len(videos)
+        max_workers = 10
         with tqdm(total=total, desc="Processing videos", unit="vid") as pbar:
-            for video in videos:
-                try:
-                    video_url = f"https://www.youtube.com/watch?v={video['video_id']}"
-                    processor = TranscriptProcessor()
-                    docs = processor.load_transcript(
-                        video_url, language=languages, translation=translate_to
-                    )
-
-                    if docs:
-                        markdown = processor.format_transcript_as_markdown(
-                            docs, video_info=video
-                        )
-                        filepath = file_manager.save_youtube_transcript(video, markdown)
-                        if filepath:
-                            logger.info(f"Saved: {video['title']} -> {filepath}")
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=max_workers
+            ) as executor:
+                future_to_title = {
+                    executor.submit(
+                        process_single_video,
+                        video,
+                        languages,
+                        translate_to,
+                        args.output_dir,
+                        logger,
+                    ): video["title"]
+                    for video in videos
+                }
+                for future in concurrent.futures.as_completed(future_to_title):
+                    try:
+                        success, title = future.result()
+                        if success:
                             successful += 1
-                        else:
-                            logger.warning(f"Failed to save: {video['title']}")
-                    else:
-                        logger.warning(f"No transcript available: {video['title']}")
-
-                    pbar.update(1)
-                except Exception as e:
-                    logger.error(
-                        f"Error processing {video.get('title', 'unknown')}: {str(e)}"
-                    )
+                        pbar.update(1)
+                    except Exception as exc:
+                        title = future_to_title[future]
+                        logger.error(f"Thread generated exception for {title}: {exc}")
+                        pbar.update(1)
 
         logger.info(f"YouTube processing complete: {successful}/{total} videos saved.")
         print(f"\nYouTube processing complete: {successful}/{total} videos")
@@ -347,8 +369,8 @@ def main():
         logger.info("Attempting to extract URLs from sitemap...")
         urls = extract_sitemap_urls_recursive(session, args.url)
 
-    # If sitemap doesn't exist or doesn't have any URLs, fall back to crawling
-    if not urls and not args.sitemap_only:
+            # If sitemap doesn't exist or doesn't have any URLs, fall back to crawling
+        if not urls and not args.sitemap_only:
         logger.info(
             "No sitemap found or no URLs in sitemap. Falling back to recursive crawling..."
         )
