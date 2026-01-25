@@ -9,10 +9,11 @@ import logging
 from datetime import datetime
 
 try:
-    from langchain_community.document_loaders import YoutubeLoader
-except ImportError:
+    from langchain_core.documents import Document
+    from youtube_transcript_api._api import YouTubeTranscriptApi
+except ImportError as e:
     raise ImportError(
-        "langchain-community not installed. Run 'pip install langchain-community'"
+        f"Required packages not installed: {e}. Run 'pip install langchain-core youtube-transcript-api'"
     )
 
 
@@ -33,27 +34,43 @@ class TranscriptProcessor:
         self, youtube_url: str, language=["en"], translation=None, add_video_info=True
     ):
         """
-        Load transcript using YoutubeLoader.
+        Load transcript using YouTubeTranscriptApi.
 
         Args:
             youtube_url (str): Full YouTube video URL
             language (list): Preferred languages (e.g. ["en", "es"])
-            translation (str or None): Translation language if available
-            add_video_info (bool): Add video metadata from yt-dlp/pytube
+            translation (str or None): Translation language if available (not used)
+            add_video_info (bool): Add video metadata (not used)
 
         Returns:
             list: List of LangChain Document objects with transcripts
         """
+        # Extract video ID from URL
+        import re
+
+        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", youtube_url)
+        if not match:
+            self.logger.error(f"Could not extract video ID from {youtube_url}")
+            return []
+        video_id = match.group(1)
+
         try:
-            loader = YoutubeLoader.from_youtube_url(
-                youtube_url,
-                language=language,
-                translation=translation,
-                add_video_info=add_video_info,
+            # Get transcript using direct API, try preferred languages first
+            transcript = None
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(
+                    video_id, languages=language
+                )
+            except:
+                # Try without language restriction
+                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            # Format as text with timestamps
+            content = "\n".join(
+                [f"[{int(entry['start'])}s] {entry['text']}" for entry in transcript]
             )
-            docs = loader.load()
+            doc = Document(page_content=content)
             self.logger.info(f"Successfully loaded transcript for {youtube_url}")
-            return docs
+            return [doc]
         except Exception as e:
             self.logger.warning(f"No transcript available for {youtube_url}: {str(e)}")
             return []

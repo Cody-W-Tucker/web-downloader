@@ -388,40 +388,42 @@ def main():
             url_content_map = crawler.crawl()
             urls = list(url_content_map.keys())
 
-    if not urls:
-        logger.error(
-            "No URLs found to process. Check if the site has a sitemap or try changing parameters."
-        )
-        print("Error: No URLs found to process.")
-        sys.exit(1)
+        if not urls:
+            logger.error(
+                "No URLs found to process. Check if the site has a sitemap or try changing parameters."
+            )
+            print("Error: No URLs found to process.")
+            sys.exit(1)
 
-    # Process each URL
-    successful = 0
-    failed = 0
-    logger.info(f"Processing {len(urls)} URLs...")
+        # Process each URL
+        successful = 0
+        failed = 0
+        logger.info(f"Processing {len(urls)} URLs...")
 
-    try:
-        with tqdm(total=len(urls), desc="Processing URLs", unit="URL") as progress_bar:
-            for url in urls:
-                result = process_url(url, session, content_extractor, file_manager)
-                if result:
-                    successful += 1
-                else:
-                    failed += 1
-                progress_bar.update(1)
-    except KeyboardInterrupt:
-        logger.warning("Process interrupted by user")
-        print("\nProcess interrupted by user")
+        try:
+            with tqdm(
+                total=len(urls), desc="Processing URLs", unit="URL"
+            ) as progress_bar:
+                for url in urls:
+                    result = process_url(url, session, content_extractor, file_manager)
+                    if result:
+                        successful += 1
+                    else:
+                        failed += 1
+                    progress_bar.update(1)
+        except KeyboardInterrupt:
+            logger.warning("Process interrupted by user")
+            print("\nProcess interrupted by user")
 
-    # Report statistics
-    logger.info(f"Extraction complete. Successfully processed {successful} URLs.")
-    if failed > 0:
-        logger.warning(f"Failed to process {failed} URLs.")
+        # Report statistics
+        logger.info(f"Extraction complete. Successfully processed {successful} URLs.")
+        if failed > 0:
+            logger.warning(f"Failed to process {failed} URLs.")
 
-    print("\nExtraction complete.")
-    print(f"Successfully processed: {successful} URLs")
-    print(f"Failed to process: {failed} URLs")
-    print(f"Output directory: {os.path.abspath(args.output_dir)}")
+        print("\nExtraction complete.")
+        print(f"Successfully processed: {successful} URLs")
+        print(f"Failed to process: {failed} URLs")
+        print(f"Output directory: {os.path.abspath(args.output_dir)}")
 
 
 if __name__ == "__main__":

@@ -324,31 +324,7 @@ class YouTubePlaylistHandler:
 
             if "items" not in response or not response["items"]:
                 self.logger.warning(f"No channel found for ID {channel_id}")
-        return []
-
-    def get_video_metadata(self, video_id):
-        """
-        Retrieve metadata for a single YouTube video.
-        """
-        try:
-            request = self.youtube.videos().list(
-                part="snippet",
-                id=video_id
-            )
-            response = self._execute_with_retry(request)
-            if "items" in response and response["items"]:
-                snippet = response["items"][0].get("snippet", {})
-                return {
-                    "video_id": video_id,
-                    "title": snippet.get("title", ""),
-                    "description": snippet.get("description", ""),
-                    "published_at": snippet.get("publishedAt", ""),
-                    "channel_title": snippet.get("channelTitle", ""),
-                    "thumbnails": snippet.get("thumbnails", {})
-                }
-        except Exception as e:
-            self.logger.error(f"Error fetching metadata for {video_id}: {e}")
-        return None
+                return []
 
             uploads_playlist_id = response["items"][0]["contentDetails"][
                 "relatedPlaylists"
@@ -369,10 +345,7 @@ class YouTubePlaylistHandler:
         Retrieve metadata for a single YouTube video.
         """
         try:
-            request = self.youtube.videos().list(
-                part="snippet",
-                id=video_id
-            )
+            request = self.youtube.videos().list(part="snippet", id=video_id)
             response = self._execute_with_retry(request)
             if "items" in response and response["items"]:
                 snippet = response["items"][0].get("snippet", {})
@@ -382,7 +355,7 @@ class YouTubePlaylistHandler:
                     "description": snippet.get("description", ""),
                     "published_at": snippet.get("publishedAt", ""),
                     "channel_title": snippet.get("channelTitle", ""),
-                    "thumbnails": snippet.get("thumbnails", {})
+                    "thumbnails": snippet.get("thumbnails", {}),
                 }
         except Exception as e:
             self.logger.error(f"Error fetching metadata for {video_id}: {e}")
