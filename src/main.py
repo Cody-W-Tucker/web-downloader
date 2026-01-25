@@ -134,12 +134,6 @@ def parse_arguments():
     parser.add_argument("--youtube", help="YouTube playlist URL")
     parser.add_argument("--youtube-channel", help="YouTube channel URL or ID")
     parser.add_argument(
-        "--language",
-        default="en",
-        help="Preferred transcript languages, comma-separated (default: en)",
-    )
-    parser.add_argument("--translate-to", help="Translate to this language (ISO code)")
-    parser.add_argument(
         "--youtube-api-key",
         help="YouTube Data API v3 key (or use YOUTUBE_API_KEY env var)",
     )
@@ -291,8 +285,8 @@ def main():
             )
             sys.exit(1)
 
-        languages = [lang.strip() for lang in args.language.split(",")]
-        translate_to = args.translate_to
+        languages = ["en"]
+        translate_to = None
 
         logger.info(
             f"Processing YouTube {'playlist' if args.youtube else 'channel'}: {youtube_url}"

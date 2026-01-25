@@ -80,12 +80,7 @@ web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --out
 
 #### Channel
 ```bash
-web-downloader --youtube-channel 'https://www.youtube.com/@channelhandle' --language 'en,es'
-```
-
-#### With Translation
-```bash
-web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --language 'es,fr' --translate-to 'en'
+web-downloader --youtube-channel 'https://www.youtube.com/@channelhandle'
 ```
 
 ## CLI Options
@@ -105,8 +100,6 @@ web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --lan
 **YouTube-specific:**
 - `--youtube URL` - YouTube playlist URL
 - `--youtube-channel URL` - YouTube channel URL
-- `--language LANGS` - Comma-separated languages (default: 'en')
-- `--translate-to LANG` - Translate to this language
 - `--youtube-api-key KEY` - API key (or use .env)
 
 Run `web-downloader --help` for full list.

@@ -61,7 +61,7 @@ class TranscriptProcessor:
                 transcript = YouTubeTranscriptApi.get_transcript(
                     video_id, languages=language
                 )
-            except:
+            except Exception:
                 # Try without language restriction
                 transcript = YouTubeTranscriptApi.get_transcript(video_id)
             # Format as text with timestamps
