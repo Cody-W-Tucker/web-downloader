@@ -515,7 +515,7 @@ from .transcript_processor import TranscriptProcessor
 
 # Add these to the parse_arguments function
 parser.add_argument(
-    "--youtube-playlist",
+    "--youtube",
     help="YouTube playlist URL to extract transcripts from"
 )
 
@@ -838,13 +838,13 @@ if __name__ == "__main__":
 
 ```bash
 # Extract transcripts from a YouTube playlist
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0" --output-dir "transcripts"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0" --output-dir "transcripts"
 
 # Extract transcripts from a YouTube channel
 python -m src --youtube-channel "https://www.youtube.com/c/AndrewNgAI" --output-dir "transcripts"
 
 # Extract with language preferences and translation
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0" --language "en,fr,es" --translate-to "en"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLkDaE6sCZn6Ec-XTbcX1uRg2_u4xOEky0" --language "en,fr,es" --translate-to "en"
 ```
 
 ### API Usage

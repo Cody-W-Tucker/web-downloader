@@ -50,13 +50,13 @@ The web-downloader project currently provides functionality to crawl websites, e
 #### Command Line Usage Examples
 ```bash
 # Extract transcripts from a YouTube playlist
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
 
 # Extract transcripts from a YouTube channel
 python -m src --youtube-channel "https://www.youtube.com/c/CHANNEL_NAME" --output-dir "transcripts/channel_name"
 
 # Extract with language preferences
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
 ```
 
 #### Output Structure
@@ -134,7 +134,7 @@ type: "youtube_transcript"
 
 #### 1. Main Controller (`src/main.py`)
 - Add YouTube-specific CLI arguments:
-  - `--youtube-playlist URL`: YouTube playlist URL
+  - `--youtube URL`: YouTube playlist URL
   - `--youtube-channel URL`: YouTube channel URL
   - `--language LANG`: Comma-separated language codes (default: "en")
   - `--translate-to LANG`: Translation target language

@@ -64,7 +64,7 @@ python -m src.main [URL or YouTube options]
 
 The tool detects input type:
 - Website URL → Web crawling mode
-- `--youtube-playlist`/`--youtube-channel` → YouTube mode
+- `--youtube`/`--youtube-channel` → YouTube mode
 
 ### Website Examples
 ```bash
@@ -75,7 +75,7 @@ web-downloader https://example.com --depth 3 --output-dir ./example-site
 
 #### Playlist
 ```bash
-web-downloader --youtube-playlist 'https://www.youtube.com/playlist?list=PLexample' --output-dir transcripts/playlist
+web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --output-dir transcripts/playlist
 ```
 
 #### Channel
@@ -85,7 +85,7 @@ web-downloader --youtube-channel 'https://www.youtube.com/@channelhandle' --lang
 
 #### With Translation
 ```bash
-web-downloader --youtube-playlist 'https://www.youtube.com/playlist?list=PLexample' --language 'es,fr' --translate-to 'en'
+web-downloader --youtube 'https://www.youtube.com/playlist?list=PLexample' --language 'es,fr' --translate-to 'en'
 ```
 
 ## CLI Options
@@ -103,7 +103,7 @@ web-downloader --youtube-playlist 'https://www.youtube.com/playlist?list=PLexamp
 - `--sitemap-only` - Sitemap only
 
 **YouTube-specific:**
-- `--youtube-playlist URL` - YouTube playlist URL
+- `--youtube URL` - YouTube playlist URL
 - `--youtube-channel URL` - YouTube channel URL
 - `--language LANGS` - Comma-separated languages (default: 'en')
 - `--translate-to LANG` - Translate to this language

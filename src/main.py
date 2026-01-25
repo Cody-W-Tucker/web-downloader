@@ -131,7 +131,7 @@ def parse_arguments():
         "--user-agent", default="WebToMarkdown/1.0", help="Custom user agent string"
     )
 
-    parser.add_argument("--youtube-playlist", help="YouTube playlist URL")
+    parser.add_argument("--youtube", help="YouTube playlist URL")
     parser.add_argument("--youtube-channel", help="YouTube channel URL or ID")
     parser.add_argument(
         "--language",
@@ -281,9 +281,9 @@ def main():
         logger.info(f"Respect robots.txt: {args.respect_robots}")
         logger.info(f"User agent: {args.user_agent}")
 
-    if args.youtube_playlist or args.youtube_channel:
+    if args.youtube or args.youtube_channel:
         # YouTube workflow
-        youtube_url = args.youtube_playlist or args.youtube_channel
+        youtube_url = args.youtube or args.youtube_channel
         api_key = args.youtube_api_key or os.getenv("YOUTUBE_API_KEY")
         if not api_key:
             logger.error(
@@ -295,7 +295,7 @@ def main():
         translate_to = args.translate_to
 
         logger.info(
-            f"Processing YouTube {'playlist' if args.youtube_playlist else 'channel'}: {youtube_url}"
+            f"Processing YouTube {'playlist' if args.youtube else 'channel'}: {youtube_url}"
         )
 
         handler = YouTubePlaylistHandler(api_key)

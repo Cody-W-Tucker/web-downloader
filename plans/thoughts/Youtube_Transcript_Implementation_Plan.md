@@ -93,7 +93,7 @@ After reviewing the LangChain documentation, we can leverage existing components
 
 1. Modify `main.py` to:
 	 - Add new command-line arguments for YouTube operations:
-		 - `--youtube-playlist URL`
+		 - `--youtube URL`
 		 - `--youtube-channel URL`
 		 - `--language LANG` (with defaults to English)
 		 - `--api-key KEY`
@@ -190,13 +190,13 @@ Once implemented, the tool would be used as follows:
 
 ```bash
 # Extract transcripts from a YouTube playlist
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
 
 # Extract transcripts from a YouTube channel
 python -m src --youtube-channel "https://www.youtube.com/c/CHANNEL_NAME" --output-dir "transcripts/channel_name"
 
 # Extract with language preferences
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
 ```
 
 ## Conclusion

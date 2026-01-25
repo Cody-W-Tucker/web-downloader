@@ -65,7 +65,7 @@
     "priority_hint": "P1",
     "description": "Add YouTube CLI arguments and workflow to main.py",
     "steps": [
-      "Add --youtube-playlist argument to argument parser",
+      "Add --youtube argument to argument parser",
       "Add --youtube-channel argument",
       "Add --language and --translate-to arguments",
       "Add --youtube-api-key argument",

@@ -53,7 +53,7 @@ A tool that extracts transcripts from YouTube videos, playlists, and channels, a
 #### Extract Transcripts from a YouTube Playlist
 
 ```bash
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --output-dir "transcripts/playlist_name"
 ```
 
 #### Extract Transcripts from a YouTube Channel
@@ -65,12 +65,12 @@ python -m src --youtube-channel "https://www.youtube.com/c/CHANNEL_NAME" --outpu
 #### Extract with Language Preferences
 
 ```bash
-python -m src --youtube-playlist "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
+python -m src --youtube "https://www.youtube.com/playlist?list=PLAYLIST_ID" --language "en,es,fr" --translate-to "en"
 ```
 
 ### Parameters
 
-- `--youtube-playlist`: URL of the YouTube playlist to process
+- `--youtube`: URL of the YouTube playlist to process
 - `--youtube-channel`: URL of the YouTube channel to process
 - `--output-dir`: Directory to save the transcripts (default: "output")
 - `--language`: Comma-separated list of language codes in order of preference (default: "en")
