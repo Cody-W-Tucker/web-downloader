@@ -2,9 +2,9 @@ import pytest
 from unittest.mock import patch
 
 
-from src.youtube_playlist_handler import YouTubePlaylistHandler
-from src.transcript_processor import TranscriptProcessor
-from src.file_manager import FileManager
+from web_downloader.youtube_playlist_handler import YouTubePlaylistHandler
+from web_downloader.transcript_processor import TranscriptProcessor
+from web_downloader.file_manager import FileManager
 
 
 @pytest.fixture

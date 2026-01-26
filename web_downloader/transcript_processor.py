@@ -1,5 +1,5 @@
 """
-YouTube Transcript Processor using LangChain YoutubeLoader
+YouTube Transcript Processor using youtube-transcript-api
 
 This module provides functionality to load, format, and convert YouTube transcripts to Markdown.
 Supports language preferences and available translations.
@@ -9,17 +9,17 @@ import logging
 from datetime import datetime
 
 try:
-    from langchain_core.documents import Document
     from youtube_transcript_api._api import YouTubeTranscriptApi
+    from langchain_core.documents import Document
 except ImportError as e:
     raise ImportError(
-        f"Required packages not installed: {e}. Run 'pip install langchain-core youtube-transcript-api'"
+        f"Required packages not installed: {e}. Run 'pip install youtube-transcript-api langchain-core'"
     )
 
 
 class TranscriptProcessor:
     """
-    Processor for loading and formatting YouTube transcripts using LangChain YoutubeLoader.
+    Processor for loading and formatting YouTube transcripts using youtube-transcript-api.
 
     Handles multiple language preferences, translations, video info, and error cases.
     """
@@ -34,13 +34,13 @@ class TranscriptProcessor:
         self, youtube_url: str, language=["en"], translation=None, add_video_info=True
     ):
         """
-        Load transcript using YouTubeTranscriptApi.
+        Load transcript using YouTube Transcript API with fallback to any available language.
 
         Args:
             youtube_url (str): Full YouTube video URL
             language (list): Preferred languages (e.g. ["en", "es"])
-            translation (str or None): Translation language if available (not used)
-            add_video_info (bool): Add video metadata (not used)
+            translation (str or None): Translation language if available
+            add_video_info (bool): Add video metadata
 
         Returns:
             list: List of LangChain Document objects with transcripts
@@ -55,24 +55,49 @@ class TranscriptProcessor:
         video_id = match.group(1)
 
         try:
-            # Get transcript using direct API, try preferred languages first
+            # Get list of available transcripts
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            available_transcripts = list(transcript_list)
+
+            if not available_transcripts:
+                self.logger.warning(f"No transcripts available for {youtube_url}")
+                return []
+
+            # Try to find transcript in preferred languages
             transcript = None
-            try:
-                transcript = YouTubeTranscriptApi.get_transcript(
-                    video_id, languages=language
-                )
-            except Exception:
-                # Try without language restriction
-                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+
+            # First try preferred languages
+            for lang in language:
+                try:
+                    transcript = transcript_list.find_transcript([lang]).fetch()
+                    break
+                except Exception:
+                    continue
+
+            # If no preferred language worked, try any available transcript
+            if transcript is None:
+                for t in available_transcripts:
+                    try:
+                        transcript = t.fetch()
+                        break
+                    except Exception:
+                        continue
+
+            if transcript is None:
+                self.logger.warning(f"Could not fetch any transcript for {youtube_url}")
+                return []
+
             # Format as text with timestamps
             content = "\n".join(
                 [f"[{int(entry['start'])}s] {entry['text']}" for entry in transcript]
             )
-            doc = Document(page_content=content)
+            doc = Document(page_content=content, metadata={"source": youtube_url})
             self.logger.info(f"Successfully loaded transcript for {youtube_url}")
             return [doc]
         except Exception as e:
-            self.logger.warning(f"No transcript available for {youtube_url}: {str(e)}")
+            self.logger.warning(
+                f"Error processing transcript for {youtube_url}: {str(e)}"
+            )
             return []
 
     def _format_transcript(self, docs):
@@ -80,7 +105,7 @@ class TranscriptProcessor:
         Format transcript documents with timestamps and content.
 
         Args:
-            docs (list): List of Document objects from YoutubeLoader
+            docs (list): List of Document objects from YouTube Transcript API
 
         Returns:
             str: Formatted transcript text
@@ -120,7 +145,7 @@ class TranscriptProcessor:
             md += f"channel_title: {video_info.get('channel_title', '')}\n"
             md += f"published_at: {video_info.get('published_at', '')}\n"
             md += f"youtube_url: https://www.youtube.com/watch?v={video_info.get('video_id', '')}\n"
-        md += "source: YouTube Transcript (via LangChain YoutubeLoader)\n"
+        md += "source: YouTube Transcript (via youtube-transcript-api)\n"
         md += f"date_extracted: {datetime.now().isoformat()}\n"
         md += "---\n\n"
         md += formatted

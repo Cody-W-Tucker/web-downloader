@@ -16,11 +16,20 @@ import sys
 from tqdm import tqdm
 from dotenv import load_dotenv
 
-from .crawler import RateLimitedSession, WebCrawler
-from .sitemap_parser import extract_sitemap_urls_recursive
-from .content_extractor import ContentExtractor
-from .markdown_converter import convert_html_to_markdown
-from .file_manager import FileManager
+# Try relative imports first (when run as module)
+try:
+    from .crawler import RateLimitedSession, WebCrawler
+    from .sitemap_parser import extract_sitemap_urls_recursive
+    from .content_extractor import ContentExtractor
+    from .markdown_converter import convert_html_to_markdown
+    from .file_manager import FileManager
+# Fall back to absolute imports (when run directly)
+except ImportError:
+    from crawler import RateLimitedSession, WebCrawler  # type: ignore[import-not-found,no-redef]
+    from sitemap_parser import extract_sitemap_urls_recursive  # type: ignore[import-not-found,no-redef]
+    from content_extractor import ContentExtractor  # type: ignore[import-not-found,no-redef]
+    from markdown_converter import convert_html_to_markdown  # type: ignore[import-not-found,no-redef]
+    from file_manager import FileManager  # type: ignore[import-not-found,no-redef]
 
 
 def setup_logging(log_level=logging.INFO):

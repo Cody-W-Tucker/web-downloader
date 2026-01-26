@@ -59,7 +59,7 @@ Basic usage (website or YouTube):
 web-downloader [URL or YouTube options]
 
 # Manual
-python -m src.main [URL or YouTube options]
+python -m web_downloader [URL or YouTube options]
 ```
 
 The tool detects input type:

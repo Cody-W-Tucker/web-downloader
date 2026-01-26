@@ -78,7 +78,7 @@
 
               # Create proper Python package structure
               mkdir -p $out/lib/web-downloader
-              cp -r ./src/* $out/lib/web-downloader/
+              cp -r ./web_downloader/* $out/lib/web-downloader/
               touch $out/lib/web-downloader/__init__.py
 
               # Make sure all modules can be imported

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
-from src.file_manager import FileManager
+from web_downloader.file_manager import FileManager
+
 
 def test_sanitize_filename_unicode(tmp_path):
     fm = FileManager(str(tmp_path))
@@ -10,6 +11,7 @@ def test_sanitize_filename_unicode(tmp_path):
     assert "Café" in sanitized
     assert "Vidéo" in sanitized
     assert "🎉" in sanitized
+
 
 def test_save_youtube_transcript(tmp_path):
     fm = FileManager(str(tmp_path))
@@ -41,6 +43,7 @@ Test content.
         saved_content = f.read()
     assert "Test Video with cafés" in saved_content
     assert "🎉" in saved_content
+
 
 def test_save_youtube_conflict_overwrite(tmp_path):
     fm = FileManager(str(tmp_path))

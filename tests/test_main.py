@@ -4,7 +4,7 @@ Tests for main module functionality
 
 import unittest
 from unittest.mock import MagicMock, patch
-from src.main import process_url, ProcessingError
+from web_downloader.main import process_url, ProcessingError
 
 
 class TestMainFunctionality(unittest.TestCase):
@@ -28,7 +28,10 @@ class TestMainFunctionality(unittest.TestCase):
         )
         self.mock_file_manager.save_markdown.return_value = "/path/to/file.md"
 
-        with patch("src.main.convert_html_to_markdown", return_value="# Test\nContent"):
+        with patch(
+            "web_downloader.main.convert_html_to_markdown",
+            return_value="# Test\nContent",
+        ):
             result = process_url(
                 "http://example.com",
                 self.mock_session,
@@ -75,7 +78,7 @@ class TestMainFunctionality(unittest.TestCase):
             "Cleaned content",
         )
 
-        with patch("src.main.convert_html_to_markdown", return_value=""):
+        with patch("web_downloader.main.convert_html_to_markdown", return_value=""):
             with self.assertRaises(ProcessingError) as cm:
                 process_url(
                     "http://example.com",
@@ -95,7 +98,10 @@ class TestMainFunctionality(unittest.TestCase):
         )
         self.mock_file_manager.save_markdown.return_value = None
 
-        with patch("src.main.convert_html_to_markdown", return_value="# Test\nContent"):
+        with patch(
+            "web_downloader.main.convert_html_to_markdown",
+            return_value="# Test\nContent",
+        ):
             with self.assertRaises(ProcessingError) as cm:
                 process_url(
                     "http://example.com",

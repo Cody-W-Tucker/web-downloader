@@ -4,7 +4,7 @@ Tests for TranscriptProcessor
 
 import unittest
 from unittest.mock import patch, Mock
-from src.transcript_processor import TranscriptProcessor
+from web_downloader.transcript_processor import TranscriptProcessor
 
 
 class TestTranscriptProcessor(unittest.TestCase):

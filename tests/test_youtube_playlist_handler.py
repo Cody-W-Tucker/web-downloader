@@ -4,7 +4,7 @@ Tests for YouTube Playlist Handler
 
 import unittest
 from unittest.mock import MagicMock, patch
-from src.youtube_playlist_handler import YouTubePlaylistHandler
+from web_downloader.youtube_playlist_handler import YouTubePlaylistHandler
 
 
 class TestYouTubePlaylistHandler(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestYouTubePlaylistHandler(unittest.TestCase):
             self.assertEqual(channel_id, "UC1234567890abcdef")
             mock_resolve.assert_called_once_with("TestChannel")
 
-    @patch("src.youtube_playlist_handler.build")
+    @patch("web_downloader.youtube_playlist_handler.build")
     def test_get_videos_from_playlist(self, mock_build):
         """Test getting videos from playlist."""
         mock_youtube = MagicMock()
@@ -82,7 +82,7 @@ class TestYouTubePlaylistHandler(unittest.TestCase):
         self.assertEqual(videos[0]["video_id"], "video123")
         self.assertEqual(videos[0]["title"], "Test Video")
 
-    @patch("src.youtube_playlist_handler.build")
+    @patch("web_downloader.youtube_playlist_handler.build")
     def test_get_videos_from_channel(self, mock_build):
         """Test getting videos from channel."""
         mock_youtube = MagicMock()
@@ -141,7 +141,7 @@ class TestYouTubePlaylistHandler(unittest.TestCase):
         for url in urls:
             self.assertIsNone(handler.extract_video_id(url))
 
-    @patch("src.youtube_playlist_handler.build")
+    @patch("web_downloader.youtube_playlist_handler.build")
     def test_get_video_metadata(self, mock_build):
         """Test getting single video metadata."""
         mock_youtube = MagicMock()

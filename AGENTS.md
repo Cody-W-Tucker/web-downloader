@@ -11,25 +11,25 @@ web-downloader is a Python CLI tool that extracts content from websites and down
 ### Type Checking
 ```bash
 # Check types for the entire codebase
-mypy src tests
+mypy web_downloader tests
 
 # Check types for a specific file
-mypy src/main.py
+mypy web_downloader/main.py
 ```
 
 ### Linting
 ```bash
 # Lint the entire codebase
-ruff check src tests
+ruff check web_downloader tests
 
 # Lint a specific file
-ruff check src/main.py
+ruff check web_downloader/main.py
 
 # Auto-fix linting issues where possible
-ruff check --fix src tests
+ruff check --fix web_downloader tests
 
 # Format code
-ruff format src tests
+ruff format web_downloader tests
 ```
 
 ### Testing
@@ -44,7 +44,7 @@ pytest tests/test_youtube_playlist_handler.py
 pytest tests/test_youtube_playlist_handler.py::TestYouTubePlaylistHandler::test_extract_playlist_id_valid
 
 # Run tests with coverage
-pytest --cov=src tests
+pytest --cov=web_downloader tests
 
 # Run tests in verbose mode
 pytest -v tests

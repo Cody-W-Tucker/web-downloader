@@ -19,6 +19,7 @@ import concurrent.futures
 from .file_manager import FileManager
 from .youtube_playlist_handler import YouTubePlaylistHandler
 from .transcript_processor import TranscriptProcessor
+from .utils.vpn_detector import VPNDetector
 
 
 def setup_logging(log_level=logging.INFO):
@@ -143,6 +144,13 @@ def run_youtube(args):
     log_level = configure_log_level(args.verbose)
     logger = setup_logging(log_level=log_level)
     load_dotenv()
+
+    # Check VPN status before proceeding with YouTube downloads
+    detector = VPNDetector()
+    secured, status_msg = detector.check_mullvad_status()
+    if not detector.prompt_user_if_needed(secured, status_msg):
+        logger.info("User chose not to proceed without VPN")
+        sys.exit(0)
 
     if args.verbose > 0:
         logger.info(f"Output directory: {args.output_dir}")
