@@ -15,40 +15,45 @@ class TestTranscriptProcessor(unittest.TestCase):
         self.processor = TranscriptProcessor()
         self.sample_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
-    @patch("youtube_transcript_api._api.YouTubeTranscriptApi.get_transcript")
-    def test_load_transcript_success(self, mock_get_transcript):
+    def test_load_transcript_success(self):
         """Test successful transcript loading."""
-        mock_get_transcript.return_value = [
-            {"start": 0, "text": "Intro"},
-            {"start": 5, "text": "Test content"},
+        self.processor.api = Mock()
+        self.processor.api.fetch.return_value = [
+            {"start": 0, "text": "Intro", "language": "en"},
+            {"start": 5, "text": "Test content", "language": "en"},
         ]
 
         docs = self.processor.load_transcript(self.sample_url)
 
-        mock_get_transcript.assert_called_once_with("dQw4w9WgXcQ", languages=["en"])
+        self.processor.api.fetch.assert_called_once_with(
+            "dQw4w9WgXcQ", languages=["en"]
+        )
         self.assertEqual(len(docs), 1)
         self.assertIn("[0s] Intro", docs[0].page_content)
         self.assertIn("[5s] Test content", docs[0].page_content)
 
-    @patch("youtube_transcript_api._api.YouTubeTranscriptApi.get_transcript")
-    def test_load_transcript_no_transcript(self, mock_get_transcript):
+    def test_load_transcript_no_transcript(self):
         """Test handling no available transcript."""
-        mock_get_transcript.side_effect = Exception("No transcript found")
+        self.processor.api = Mock()
+        self.processor.api.fetch.side_effect = Exception("No transcript found")
+        self.processor.api.list.return_value = []
 
         docs = self.processor.load_transcript(self.sample_url)
 
         self.assertEqual(docs, [])
 
-    @patch("youtube_transcript_api._api.YouTubeTranscriptApi.get_transcript")
-    def test_load_transcript_with_params(self, mock_get_transcript):
+    def test_load_transcript_with_params(self):
         """Test loading transcript with custom parameters."""
-        mock_get_transcript.return_value = []
+        self.processor.api = Mock()
+        self.processor.api.fetch.return_value = []
 
         self.processor.load_transcript(
             self.sample_url, language=["en"], translation=None
         )
 
-        mock_get_transcript.assert_called_once_with("dQw4w9WgXcQ", languages=["en"])
+        self.processor.api.fetch.assert_called_once_with(
+            "dQw4w9WgXcQ", languages=["en"]
+        )
 
     def test_format_transcript_empty(self):
         """Test formatting empty docs."""
