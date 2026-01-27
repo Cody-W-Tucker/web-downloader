@@ -235,7 +235,7 @@ def main():
     # Dispatch to YouTube if YouTube args are provided
     if args.youtube or args.youtube_channel:
         try:
-            from . import youtube_downloader
+            import youtube_downloader
 
             youtube_downloader.run_youtube(args)
         except ImportError:
