@@ -124,46 +124,7 @@ export NIX_NODE_PATH="@node@/bin/node"
 export NODE_PATH="@nodeModules@/lib/node_modules''${NODE_PATH:+:$NODE_PATH}"
 export PYTHONPATH="@out@/lib/web-downloader''${PYTHONPATH:+:$PYTHONPATH}"
 
-if [ $# -lt 1 ]; then
-  echo "Usage: web-downloader URL [options]"
-  exit 1
-fi
-
-URL="$1"
-shift
-
-case "$URL" in
-  --help|-h|-*)
-    exec @python@/bin/python @out@/lib/web-downloader/main.py "$URL" "$@"
-    ;;
-esac
-
-HAS_CUSTOM_OUTPUT=0
-PREV_ARG=""
-
-for arg in "$@"; do
-  if [ "$PREV_ARG" = "--output-dir" ]; then
-    HAS_CUSTOM_OUTPUT=1
-    break
-  fi
-  PREV_ARG="$arg"
-done
-
-if [ "$HAS_CUSTOM_OUTPUT" -eq 0 ]; then
-  DOMAIN=$(
-    @python@/bin/python - "$URL" <<'PY'
-from urllib.parse import urlparse
-import sys
-
-host = urlparse(sys.argv[1]).hostname or ""
-print(host.removeprefix("www."))
-PY
-  )
-
-  exec @python@/bin/python @out@/lib/web-downloader/main.py "$URL" --output-dir "./$DOMAIN" "$@"
-fi
-
-exec @python@/bin/python @out@/lib/web-downloader/main.py "$URL" "$@"
+exec @python@/bin/python @out@/lib/web-downloader/main.py "$@"
 WRAPPER
 
               substituteInPlace $out/bin/web-downloader \

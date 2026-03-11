@@ -28,7 +28,10 @@ build/
 
 # Output directory
 output/
+--output/
+.npm-cache/
 
 # Logs
 *.log
 /node_modules
+/result

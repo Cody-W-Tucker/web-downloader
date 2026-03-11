@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { JSDOM, VirtualConsole } from 'jsdom';
 
 const VALID_FORMATS = ['html', 'markdown', 'json'];
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 function parseArgs(argv = process.argv.slice(2)) {
     const args = argv;
@@ -92,6 +92,37 @@ async function readStdin(stdin = process.stdin) {
     });
 }
 
+function getNodeModuleRoots() {
+    const roots = [];
+
+    if (process.env.DEFUDDLE_NODE_MODULES) {
+        roots.push(process.env.DEFUDDLE_NODE_MODULES);
+    }
+
+    roots.push(path.resolve(SCRIPT_DIR, '..', 'node_modules'));
+    roots.push(path.resolve(process.cwd(), 'node_modules'));
+
+    return roots;
+}
+
+function resolveFromNodeModules(specifier) {
+    const nodeModuleRoots = getNodeModuleRoots();
+
+    if (nodeModuleRoots.length > 0) {
+        try {
+            return require.resolve(specifier, { paths: nodeModuleRoots });
+        } catch {
+        }
+    }
+
+    return require.resolve(specifier);
+}
+
+async function loadJSDOM() {
+    const jsdomPath = resolveFromNodeModules('jsdom');
+    return require(jsdomPath);
+}
+
 function getDefuddleModuleCandidates() {
     const candidates = [];
 
@@ -107,15 +138,17 @@ function getDefuddleModuleCandidates() {
         candidates.push(path.join(process.env.DEFUDDLE_NODE_MODULES, 'defuddle', 'dist', 'node.js'));
     }
 
-    candidates.push(path.resolve(SCRIPT_DIR, '..', 'node_modules', 'defuddle', 'dist', 'node.js'));
-    candidates.push(path.resolve(process.cwd(), 'node_modules', 'defuddle', 'dist', 'node.js'));
+    try {
+        candidates.push(resolveFromNodeModules('defuddle/dist/node.js'));
+    } catch {
+    }
 
     return candidates;
 }
 
 async function loadDefuddle() {
     for (const candidate of getDefuddleModuleCandidates()) {
-        if (candidate && fs.existsSync(candidate)) {
+        if (candidate) {
             return import(pathToFileURL(candidate).href);
         }
     }
@@ -143,6 +176,8 @@ async function main() {
             console.error('Error: No HTML content provided');
             process.exit(1);
         }
+
+        const { JSDOM, VirtualConsole } = await loadJSDOM();
 
         const dom = new JSDOM(htmlContent, {
             url: options.url,

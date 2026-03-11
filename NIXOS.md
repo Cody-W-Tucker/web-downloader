@@ -69,7 +69,7 @@ This automatically:
 
 ```bash
 # Behind the scenes, it runs:
-python main.py https://example.com --output-dir ./example.com
+python main.py https://example.com --output ./example.com
 ```
 
 ### Additional options:
@@ -83,7 +83,7 @@ web-downloader https://example.com --depth 3 --delay 2.0 --ignore-robots
 If you want to specify a custom output directory instead of using the domain name:
 
 ```bash
-web-downloader https://example.com --output-dir /custom/path
+web-downloader https://example.com --output /custom/path
 ```
 
 ## Troubleshooting
@@ -117,7 +117,7 @@ If you encounter permission issues when writing files:
 1. Make sure you have write permissions in the current directory
 2. Try specifying an output directory where you have full permissions:
    ```bash
-   web-downloader https://example.com --output-dir ~/Downloads/example-site
+   web-downloader https://example.com --output ~/Downloads/example-site
    ```
 
 ## Building and Testing Locally

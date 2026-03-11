@@ -89,7 +89,7 @@ The tool will automatically:
 ### Options
 
 **Basic Options:**
-- `--output-dir` - Custom directory to save files (overrides domain-based directory)
+- `--output` - Custom directory to save files (alias: `--output-dir`)
 - `--depth` - Maximum crawl depth (default: 5)
 - `--delay` - Delay between requests in seconds (default: 1.0)
 - `--max-delay` - Maximum delay for exponential backoff (default: 3.0)
@@ -143,7 +143,7 @@ web-downloader https://example.com -vv --format json
 
 **Custom output directory with specific crawl settings:**
 ```bash
-web-downloader https://example.com --output-dir ./my-site --depth 3 --delay 2.0
+web-downloader https://example.com --output ./my-site --depth 3 --delay 2.0
 ```
 
 ## Direct Defuddle CLI Access

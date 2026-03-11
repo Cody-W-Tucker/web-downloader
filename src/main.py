@@ -17,6 +17,7 @@ import logging
 import os
 import sys
 from datetime import datetime
+from urllib.parse import urlparse
 from tqdm import tqdm
 
 # Try relative imports (when used as a module)
@@ -85,9 +86,11 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--output",
         "--output-dir",
-        default="output",
-        help="Directory to save extracted content (by default, uses the domain name)"
+        dest="output_dir",
+        default=None,
+        help="Directory to save extracted content (default: the site's domain name)"
     )
     
     parser.add_argument(
@@ -194,6 +197,12 @@ def parse_arguments():
     args = parser.parse_args()
     
     return args
+
+
+def default_output_dir_for_url(url):
+    """Return the default output directory for a URL."""
+    hostname = (urlparse(url).hostname or "").removeprefix("www.")
+    return f"./{hostname}" if hostname else "./output"
 
 
 def configure_log_level(verbosity):
@@ -335,6 +344,7 @@ def main():
     """Main entry point of the application."""
     # Parse command line arguments
     args = parse_arguments()
+    output_dir = args.output_dir or default_output_dir_for_url(args.url)
     
     # Configure logging based on verbosity
     log_level = configure_log_level(args.verbose)
@@ -343,7 +353,7 @@ def main():
     # Only show these informational messages if verbose mode is enabled
     if args.verbose > 0:
         logger.info(f"Starting extraction from URL: {args.url}")
-        logger.info(f"Output directory: {args.output_dir}")
+        logger.info(f"Output directory: {output_dir}")
         logger.info(f"Output format: {args.format}")
         logger.info(f"Crawl depth: {args.depth}")
         logger.info(f"Request delay: {args.delay}s")
@@ -378,7 +388,7 @@ def main():
         print(f"Error: Failed to initialize defuddle: {str(e)}")
         sys.exit(1)
     
-    file_manager = FileManager(output_dir=args.output_dir)
+    file_manager = FileManager(output_dir=output_dir)
     
     # Try to extract URLs from sitemap first
     logger.info("Attempting to extract URLs from sitemap...")
@@ -437,7 +447,7 @@ def main():
     print(f"\nExtraction complete.")
     print(f"Successfully processed: {successful} URLs")
     print(f"Failed to process: {failed} URLs")
-    print(f"Output directory: {os.path.abspath(args.output_dir)}")
+    print(f"Output directory: {os.path.abspath(output_dir)}")
 
 
 if __name__ == "__main__":
