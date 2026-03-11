@@ -1,0 +1,10 @@
+{
+  "name": "web-downloader",
+  "version": "0.1.0",
+  "description": "Website content downloader using defuddle",
+  "type": "module",
+  "dependencies": {
+    "defuddle": "^0.12.0",
+    "jsdom": "^24.0.0"
+  }
+}

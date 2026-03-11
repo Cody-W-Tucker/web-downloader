@@ -8,12 +8,13 @@ and robots.txt directives.
 
 import logging
 import random
+import re
 import time
 from collections import deque, defaultdict
 from urllib.parse import urljoin, urlparse, urldefrag
 
 import requests
-from bs4 import BeautifulSoup
+from lxml import html
 from fake_useragent import UserAgent
 from tqdm import tqdm
 
@@ -233,7 +234,7 @@ class WebCrawler:
     
     def extract_links(self, url, html_content):
         """
-        Extract links from HTML content.
+        Extract links from HTML content using lxml.
         
         Args:
             url (str): URL of the page
@@ -243,10 +244,50 @@ class WebCrawler:
             list: List of extracted links
         """
         links = []
-        soup = BeautifulSoup(html_content, 'html.parser')
         
-        for a_tag in soup.find_all('a', href=True):
-            href = a_tag['href']
+        try:
+            # Parse HTML with lxml
+            tree = html.fromstring(html_content)
+            
+            # Find all anchor tags with href attributes
+            for a_tag in tree.xpath('//a[@href]'):
+                href = a_tag.get('href')
+                
+                # Skip empty links, anchors, and javascript
+                if not href or href.startswith('#') or href.startswith('javascript:'):
+                    continue
+                
+                # Normalize the URL
+                normalized_url = normalize_url(url, href)
+                
+                # Check if it's an internal URL and valid
+                if is_internal_url(self.base_url, normalized_url) and is_valid_url(normalized_url):
+                    links.append(normalized_url)
+        except Exception as e:
+            logger.warning(f"Error parsing HTML for link extraction from {url}: {str(e)}")
+            # Fallback: use regex to extract links
+            links = self._extract_links_regex(url, html_content)
+        
+        return links
+    
+    def _extract_links_regex(self, url, html_content):
+        """
+        Fallback method to extract links using regex.
+        
+        Args:
+            url (str): URL of the page
+            html_content (str): HTML content to extract links from
+            
+        Returns:
+            list: List of extracted links
+        """
+        links = []
+        
+        # Find all href attributes in anchor tags
+        href_pattern = r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>'
+        
+        for match in re.finditer(href_pattern, html_content, re.IGNORECASE):
+            href = match.group(1)
             
             # Skip empty links, anchors, and javascript
             if not href or href.startswith('#') or href.startswith('javascript:'):
