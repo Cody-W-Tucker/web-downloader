@@ -2,18 +2,23 @@
 Test configuration and fixtures for web-downloader test suite.
 """
 
-import pytest
-import tempfile
 import os
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 @pytest.fixture
 def temp_output_dir():
-    """Create a temporary directory for test outputs."""
+    """Create a temporary directory in the system temp folder for test outputs.
+    
+    This ensures all test files go to /tmp (or system temp) instead of the repo.
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         yield tmpdir
 
@@ -95,10 +100,11 @@ Sitemap: https://example.com/sitemap.xml
 @pytest.fixture
 def mock_response():
     """Create a mock response object for testing."""
+
     class MockResponse:
         def __init__(self, text, status_code=200, headers=None):
             self.text = text
             self.status_code = status_code
             self.headers = headers or {}
-    
+
     return MockResponse

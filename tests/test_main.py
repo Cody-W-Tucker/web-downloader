@@ -1,3 +1,4 @@
+import json
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -47,6 +48,94 @@ def test_parse_arguments_default_output_dir_is_none(monkeypatch):
     args = main.parse_arguments()
 
     assert args.output_dir is None
+
+
+def test_parse_arguments_keeps_images_by_default(monkeypatch):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["web-downloader", "https://example.com"],
+    )
+
+    args = main.parse_arguments()
+
+    assert args.remove_images is False
+
+
+def test_process_url_saves_exact_html_output(tmp_path):
+    session = MagicMock()
+    session.get.return_value = MagicMock(text="<html><body>ignored</body></html>")
+
+    extractor = MagicMock()
+    extractor.extract_raw_content.return_value = "<main><img src=\"https://example.com/image.jpg\"></main>"
+
+    file_manager = main.FileManager(output_dir=str(tmp_path))
+
+    result = main.process_url(
+        "https://example.com/about",
+        session,
+        extractor,
+        file_manager,
+        output_format="html",
+        pipeline_options={},
+    )
+
+    saved_path = tmp_path / "example.com" / "about.html"
+    assert result["filepath"] == str(saved_path)
+    assert saved_path.read_text(encoding="utf-8") == "<main><img src=\"https://example.com/image.jpg\"></main>"
+
+
+def test_process_url_saves_exact_json_output(tmp_path):
+    session = MagicMock()
+    session.get.return_value = MagicMock(text="<html><body>ignored</body></html>")
+
+    payload = {
+        "content": "<main><p>Example</p></main>",
+        "title": "Example",
+        "wordCount": 1,
+    }
+
+    extractor = MagicMock()
+    extractor.extract_raw_content.return_value = json.dumps(payload, indent=2)
+
+    file_manager = main.FileManager(output_dir=str(tmp_path))
+
+    result = main.process_url(
+        "https://example.com/about",
+        session,
+        extractor,
+        file_manager,
+        output_format="json",
+        pipeline_options={},
+    )
+
+    saved_path = tmp_path / "example.com" / "about.json"
+    assert result["filepath"] == str(saved_path)
+    assert json.loads(saved_path.read_text(encoding="utf-8")) == payload
+
+
+def test_save_combined_json_output_writes_site_file(tmp_path):
+    file_manager = main.FileManager(output_dir=str(tmp_path))
+
+    combined_path = main.save_combined_json_output(
+        file_manager,
+        "https://example.com",
+        [
+            {
+                "url": "https://example.com/about",
+                "filepath": str(tmp_path / "example.com" / "about.json"),
+                "metadata": {"title": "About"},
+                "content": "<main><p>About</p></main>",
+            }
+        ],
+    )
+
+    saved_payload = json.loads((tmp_path / "site.json").read_text(encoding="utf-8"))
+    assert combined_path == str(tmp_path / "site.json")
+    assert saved_payload["root_url"] == "https://example.com"
+    assert saved_payload["total_pages"] == 1
+    assert saved_payload["pages"][0]["url"] == "https://example.com/about"
+    assert saved_payload["pages"][0]["title"] == "About"
 
 
 def test_main_uses_default_output_dir_when_not_provided(monkeypatch, capsys):

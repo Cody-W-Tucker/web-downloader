@@ -44,10 +44,26 @@ def test_wrapper_returns_json_payload(tmp_path, sample_html):
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
 
-    assert payload["success"] is True
-    assert payload["url"] == "https://example.com/article"
     assert payload["title"] == "Test Page"
     assert "Test Heading" in payload["content"]
+    assert "success" not in payload
+    assert "url" not in payload
+
+
+def test_wrapper_returns_html_content_for_html_format(tmp_path, sample_html):
+    result = run_wrapper(
+        tmp_path,
+        "--url",
+        "https://example.com/article",
+        "--format",
+        "html",
+        html=sample_html,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip().startswith("<main>")
+    assert "Test Heading" in result.stdout
+    assert "Footer content" not in result.stdout
 
 
 def test_wrapper_returns_single_property(tmp_path, sample_html):

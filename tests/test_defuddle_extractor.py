@@ -95,12 +95,33 @@ def test_extract_content_parses_json_output(monkeypatch):
 
     assert content == "Rendered article"
     assert metadata == {
-        "success": True,
         "title": "Article title",
         "description": "Article description",
         "url": "https://example.com/article",
         "wordCount": 42,
     }
+
+
+def test_extract_raw_content_returns_stdout(monkeypatch):
+    extractor = build_extractor(monkeypatch)
+
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0,
+            stdout="<main><p>Raw HTML</p></main>",
+            stderr="",
+        ),
+    )
+
+    content = extractor.extract_raw_content(
+        "<html><body>test</body></html>",
+        "https://example.com/article",
+        output_format="html",
+    )
+
+    assert content == "<main><p>Raw HTML</p></main>"
 
 
 def test_extract_content_falls_back_to_raw_output_for_markdown(monkeypatch):

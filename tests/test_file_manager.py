@@ -21,15 +21,29 @@ class TestFileManagerInit:
         fm = FileManager(temp_output_dir)
         assert fm.output_dir == temp_output_dir
     
-    def test_init_detects_domain_based_output(self):
+    def test_init_detects_domain_based_output(self, temp_output_dir):
         """Test detection of domain-based output directory."""
-        fm = FileManager("./example.com")
-        assert fm.output_is_domain_based is True
+        # Create a relative path that looks like a domain-based output
+        # The logic checks for paths starting with './' and no path separators
+        domain_dir = os.path.join(temp_output_dir, "example.com")
+        # Change into temp dir so we can use relative path
+        orig_dir = os.getcwd()
+        try:
+            os.chdir(temp_output_dir)
+            fm = FileManager("./example.com")
+            assert fm.output_is_domain_based is True
+        finally:
+            os.chdir(orig_dir)
     
-    def test_init_detects_non_domain_based_output(self):
+    def test_init_detects_non_domain_based_output(self, temp_output_dir):
         """Test detection of non-domain-based output directory."""
-        fm = FileManager("./output/nested")
-        assert fm.output_is_domain_based is False
+        orig_dir = os.getcwd()
+        try:
+            os.chdir(temp_output_dir)
+            fm = FileManager("./output/nested")
+            assert fm.output_is_domain_based is False
+        finally:
+            os.chdir(orig_dir)
 
 
 class TestUrlToFilepath:
