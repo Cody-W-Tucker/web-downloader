@@ -104,15 +104,15 @@ The tool will automatically:
 **Output Format Options:**
 - `--format` - Output format: `markdown` (default), `html`, or `json`
   - `markdown`: Clean markdown with YAML frontmatter metadata
-  - `html`: Standardized HTML with HTML comment metadata
-  - `json`: Full JSON with all metadata fields
+  - `html`: Raw Defuddle HTML output
+  - `json`: Raw Defuddle JSON per page, plus a combined `site.json`
 
 **Content Extraction Options:**
 - `--content-selector` - CSS selector to use as main content element (bypasses auto-detection)
 - `--no-remove-hidden` - Keep elements hidden via CSS (useful for CSS sidenote layouts)
 - `--no-remove-low-scoring` - Don't remove low-scoring content blocks
 - `--no-standardize` - Don't standardize HTML elements (headings, code blocks, footnotes)
-- `--keep-images` - Keep images in the output
+- `--remove-images` - Remove images from the output
 
 ### Examples
 
@@ -203,45 +203,34 @@ Article content in clean Markdown format...
 
 ### HTML Format
 
-Clean, standardized HTML with metadata comments:
+Raw Defuddle HTML output:
 
 ```html
-<!--
-Title: Article Title
-Description: Article description
-Author: John Doe
-Published: 2024-01-15
--->
-
-<article>
+<main>
   <h1>Article Title</h1>
   <p>Clean, standardized HTML content...</p>
-</article>
+</main>
 ```
 
 ### JSON Format
 
-Full structured output with all metadata:
+Per-page output matches Defuddle JSON, and the run also writes a combined `site.json`:
 
 ```json
 {
-  "url": "https://example.com/article",
-  "metadata": {
-    "title": "Article Title",
-    "description": "Article description",
-    "author": "John Doe",
-    "date_published": "2024-01-15",
-    "domain": "example.com",
-    "site": "Example Site",
-    "language": "en",
-    "word_count": 1200,
-    "parse_time": 45,
-    "favicon": "https://example.com/favicon.ico",
-    "image": "https://example.com/article-image.jpg",
-    "meta_tags": {...},
-    "schema_org_data": {...}
-  },
-  "content": "...extracted content..."
+  "content": "<main>...</main>",
+  "title": "Article Title",
+  "description": "Article description",
+  "domain": "example.com",
+  "favicon": "https://example.com/favicon.ico",
+  "image": "https://example.com/article-image.jpg",
+  "metaTags": [],
+  "parseTime": 45,
+  "published": "2024-01-15",
+  "author": "John Doe",
+  "site": "Example Site",
+  "schemaOrgData": [],
+  "wordCount": 1200
 }
 ```
 

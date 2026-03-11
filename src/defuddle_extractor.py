@@ -98,6 +98,112 @@ class DefuddleExtractor:
         raise RuntimeError(
             f"Could not find defuddle_wrapper.js. Searched in: {module_dir}, {project_root}/src/"
         )
+
+    def _build_command(
+        self,
+        url: str,
+        output_format: str = 'markdown',
+        property_name: Optional[str] = None,
+        content_selector: Optional[str] = None,
+        pipeline_options: Optional[Dict[str, bool]] = None,
+    ) -> list[str]:
+        """Build the defuddle wrapper command for a request."""
+        cmd = [
+            self.node_path,
+            self.wrapper_path,
+            '--url', url,
+            '--format', output_format
+        ]
+
+        if self.debug:
+            cmd.append('--debug')
+
+        if property_name:
+            cmd.extend(['--property', property_name])
+
+        if content_selector:
+            cmd.extend(['--content-selector', content_selector])
+
+        pipeline_defaults = {
+            'remove_exact_selectors': True,
+            'remove_partial_selectors': True,
+            'remove_hidden_elements': True,
+            'remove_low_scoring': True,
+            'remove_small_images': True,
+            'remove_images': False,
+            'standardize': True,
+            'use_async': True
+        }
+
+        if pipeline_options:
+            pipeline_defaults.update(pipeline_options)
+
+        if not pipeline_defaults['remove_exact_selectors']:
+            cmd.append('--no-remove-exact')
+        if not pipeline_defaults['remove_partial_selectors']:
+            cmd.append('--no-remove-partial')
+        if not pipeline_defaults['remove_hidden_elements']:
+            cmd.append('--no-remove-hidden')
+        if not pipeline_defaults['remove_low_scoring']:
+            cmd.append('--no-remove-low-scoring')
+        if not pipeline_defaults['remove_small_images']:
+            cmd.append('--no-remove-small-images')
+        if pipeline_defaults['remove_images']:
+            cmd.append('--remove-images')
+        if not pipeline_defaults['standardize']:
+            cmd.append('--no-standardize')
+        if not pipeline_defaults['use_async']:
+            cmd.append('--no-async')
+
+        return cmd
+
+    def extract_raw_content(
+        self,
+        html_content: str,
+        url: str,
+        output_format: str = 'markdown',
+        property_name: Optional[str] = None,
+        content_selector: Optional[str] = None,
+        pipeline_options: Optional[Dict[str, bool]] = None,
+    ) -> Optional[str]:
+        """Run defuddle and return the raw wrapper output."""
+        try:
+            if not html_content or not html_content.strip():
+                logger.warning(f"No HTML content provided for {url}")
+                return None
+
+            cmd = self._build_command(
+                url,
+                output_format=output_format,
+                property_name=property_name,
+                content_selector=content_selector,
+                pipeline_options=pipeline_options,
+            )
+
+            logger.debug(f"Running defuddle extractor for {url} with format: {output_format}")
+
+            result = subprocess.run(
+                cmd,
+                input=html_content,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            if result.returncode != 0:
+                logger.error(f"Defuddle extractor failed for {url}: {result.stderr}")
+                return None
+
+            return result.stdout
+
+        except subprocess.TimeoutExpired:
+            logger.error(f"Defuddle extractor timed out for {url}")
+            return None
+        except Exception as e:
+            logger.error(f"Error extracting content with defuddle for {url}: {str(e)}")
+            import traceback
+            logger.debug(f"Traceback: {traceback.format_exc()}")
+            return None
     
     def extract_content(
         self, 
@@ -133,112 +239,50 @@ class DefuddleExtractor:
             Returns (None, None) on failure.
         """
         try:
-            if not html_content or not html_content.strip():
-                logger.warning(f"No HTML content provided for {url}")
-                return None, None
-            
-            # Build the command
-            cmd = [
-                self.node_path,
-                self.wrapper_path,
-                '--url', url,
-                '--format', output_format
-            ]
-            
-            # Add debug flag
-            if self.debug:
-                cmd.append('--debug')
-            
-            # Add property extraction if requested
-            if property_name:
-                cmd.extend(['--property', property_name])
-            
-            # Add content selector if provided
-            if content_selector:
-                cmd.extend(['--content-selector', content_selector])
-            
-            # Add pipeline options
-            pipeline_defaults = {
-                'remove_exact_selectors': True,
-                'remove_partial_selectors': True,
-                'remove_hidden_elements': True,
-                'remove_low_scoring': True,
-                'remove_small_images': True,
-                'remove_images': False,
-                'standardize': True,
-                'use_async': True
-            }
-            
-            if pipeline_options:
-                pipeline_defaults.update(pipeline_options)
-            
-            # Add toggle flags for disabled options
-            if not pipeline_defaults['remove_exact_selectors']:
-                cmd.append('--no-remove-exact')
-            if not pipeline_defaults['remove_partial_selectors']:
-                cmd.append('--no-remove-partial')
-            if not pipeline_defaults['remove_hidden_elements']:
-                cmd.append('--no-remove-hidden')
-            if not pipeline_defaults['remove_low_scoring']:
-                cmd.append('--no-remove-low-scoring')
-            if not pipeline_defaults['remove_small_images']:
-                cmd.append('--no-remove-small-images')
-            if pipeline_defaults['remove_images']:
-                cmd.append('--remove-images')
-            if not pipeline_defaults['standardize']:
-                cmd.append('--no-standardize')
-            if not pipeline_defaults['use_async']:
-                cmd.append('--no-async')
-            
-            # Run the wrapper with HTML content via stdin
-            logger.debug(f"Running defuddle extractor for {url} with format: {output_format}")
-            
-            result = subprocess.run(
-                cmd,
-                input=html_content,
-                capture_output=True,
-                text=True,
-                timeout=60  # 60 second timeout
+            result_stdout = self.extract_raw_content(
+                html_content,
+                url,
+                output_format=output_format,
+                property_name=property_name,
+                content_selector=content_selector,
+                pipeline_options=pipeline_options,
             )
-            
-            if result.returncode != 0:
-                logger.error(f"Defuddle extractor failed for {url}: {result.stderr}")
+
+            if result_stdout is None:
                 return None, None
             
             # Handle property extraction (returns plain text, not JSON)
             if property_name:
-                return None, result.stdout.strip()
+                return None, result_stdout.strip()
             
             # Parse the JSON output (for json format)
             if output_format == 'json':
                 try:
-                    output = json.loads(result.stdout)
+                    output = json.loads(result_stdout)
                 except json.JSONDecodeError as e:
                     logger.error(f"Failed to parse defuddle output for {url}: {e}")
-                    logger.debug(f"Raw output: {result.stdout[:500]}")
+                    logger.debug(f"Raw output: {result_stdout[:500]}")
                     return None, None
-                
-                if not output.get('success'):
-                    logger.error(f"Defuddle extraction failed for {url}: {output.get('error', 'Unknown error')}")
+
+                if not isinstance(output, dict):
+                    logger.error(f"Defuddle extraction returned non-object JSON for {url}")
                     return None, None
-                
+
                 # Return full output as metadata, and content separately
                 content = output.get('content', '')
-                
+
                 # Remove content from metadata to avoid duplication
-                metadata = {k: v for k, v in output.items() if k != 'content'}
-                
+                metadata = {k: v for k, v in output.items() if k not in {'content', 'success'}}
+
                 return metadata, content
             
-            # For html and markdown formats, parse the response to extract metadata
-            # The wrapper outputs JSON in these cases too
             try:
-                output = json.loads(result.stdout)
-                
-                if not output.get('success'):
-                    logger.error(f"Defuddle extraction failed for {url}: {output.get('error', 'Unknown error')}")
+                output = json.loads(result_stdout)
+
+                if not isinstance(output, dict):
+                    logger.error(f"Defuddle extraction returned non-object JSON for {url}")
                     return None, None
-                
+
                 # Extract metadata
                 metadata = {
                     'url': output.get('url', url),
@@ -273,12 +317,8 @@ class DefuddleExtractor:
                 
             except json.JSONDecodeError:
                 # If output is not JSON, treat it as raw content
-                content = result.stdout
+                content = result_stdout
                 return {'url': url}, content
-            
-        except subprocess.TimeoutExpired:
-            logger.error(f"Defuddle extractor timed out for {url}")
-            return None, None
         except Exception as e:
             logger.error(f"Error extracting content with defuddle for {url}: {str(e)}")
             import traceback

@@ -5,6 +5,7 @@ File Manager Module
 This module provides functionality to manage file operations like saving Markdown files.
 """
 
+import json
 import logging
 import os
 import re
@@ -271,6 +272,68 @@ class FileManager:
             logger.error(f"Error saving Markdown for {url}: {str(e)}")
             return None
     
+    def save_file(self, content, url, extension='txt'):
+        """
+        Save content to a file based on the URL structure.
+        Generic method that works with any content type.
+        
+        Args:
+            content (str): Content to save
+            url (str): URL of the source
+            extension (str, optional): File extension (without dot). Defaults to 'txt'
+            
+        Returns:
+            str: Path to the saved file, or None if failed
+        """
+        try:
+            directory, filename = self.url_to_filepath(url)
+            
+            # Create the directory structure
+            if not self._create_directory(directory):
+                return None
+            
+            # Change extension to the requested one
+            base_name = os.path.splitext(filename)[0]
+            filename = f"{base_name}.{extension}"
+            
+            # Full path to the file
+            filepath = os.path.join(directory, filename)
+            
+            # Handle naming conflicts (without frontmatter check for non-markdown files)
+            if os.path.exists(filepath):
+                base, ext = os.path.splitext(filepath)
+                counter = 1
+                while os.path.exists(filepath):
+                    filepath = f"{base}_{counter}{ext}"
+                    counter += 1
+            
+            # Write the file
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            logger.info(f"Saved file: {filepath}")
+            return filepath
+        
+        except Exception as e:
+            logger.error(f"Error saving file for {url}: {str(e)}")
+            return None
+
+    def save_site_json(self, data, filename='site.json'):
+        """Save a combined site-level JSON export in the output root."""
+        try:
+            filepath = os.path.join(self.output_dir, filename)
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+                f.write('\n')
+
+            logger.info(f"Saved site JSON file: {filepath}")
+            return filepath
+
+        except Exception as e:
+            logger.error(f"Error saving site JSON file {filename}: {str(e)}")
+            return None
+
     def _handle_naming_conflict(self, filepath, url, content_with_frontmatter):
         """
         Handle naming conflicts by checking if the existing file is from the same URL.

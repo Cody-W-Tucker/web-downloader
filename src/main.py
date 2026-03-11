@@ -187,11 +187,18 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--remove-images",
+        action="store_true",
+        dest="remove_images",
+        default=False,
+        help="Remove images from the output"
+    )
+
+    parser.add_argument(
         "--keep-images",
         action="store_false",
         dest="remove_images",
-        default=True,
-        help="Keep images in the output (default: removed)"
+        help="Keep images in the output"
     )
     
     args = parser.parse_args()
@@ -249,63 +256,69 @@ def process_url(url, session, content_extractor, file_manager, output_format='ma
             
         html_content = response.text
         
-        # Extract content and metadata using defuddle with options
-        metadata, content = content_extractor.extract_content(
-            html_content, 
-            url,
-            output_format=output_format,
-            pipeline_options=pipeline_options
-        )
-        
-        if not content:
-            logger.info(f"No content extracted from {url}")
-            return False
-        
-        # For JSON format, save as-is with formatting
+        metadata = None
+
         if output_format == 'json':
+            raw_json = content_extractor.extract_raw_content(
+                html_content,
+                url,
+                output_format='json',
+                pipeline_options=pipeline_options
+            )
+
+            if not raw_json:
+                logger.info(f"No content extracted from {url}")
+                return None
+
             try:
-                # Parse and re-format for consistency
-                json_content = json.loads(content) if isinstance(content, str) else content
-                output_data = {
-                    'url': url,
-                    'metadata': metadata,
-                    'content': json_content.get('content', content) if isinstance(json_content, dict) else content
-                }
-                formatted_content = json.dumps(output_data, indent=2, ensure_ascii=False)
+                payload = json.loads(raw_json)
             except (json.JSONDecodeError, TypeError):
-                formatted_content = content
-            
+                logger.info(f"Invalid JSON extracted from {url}")
+                return None
+
+            content = payload.get('content') if isinstance(payload, dict) else None
+            if not content:
+                logger.info(f"No content extracted from {url}")
+                return None
+
             filepath = file_manager.save_file(
-                formatted_content, 
+                raw_json,
                 url, 
                 extension='json'
             )
-        
-        # For HTML format, save with metadata header as HTML comment
+
+            metadata = {k: v for k, v in payload.items() if k != 'content'} if isinstance(payload, dict) else None
+
         elif output_format == 'html':
-            header_lines = ['<!--']
-            if metadata:
-                if metadata.get('title'):
-                    header_lines.append(f"Title: {metadata['title']}")
-                if metadata.get('description'):
-                    header_lines.append(f"Description: {metadata['description']}")
-                if metadata.get('author'):
-                    header_lines.append(f"Author: {metadata['author']}")
-                if metadata.get('date_published'):
-                    header_lines.append(f"Published: {metadata['date_published']}")
-            header_lines.append('-->')
-            header_lines.append('')
-            
-            html_output = '\n'.join(header_lines) + content
+            content = content_extractor.extract_raw_content(
+                html_content,
+                url,
+                output_format='html',
+                pipeline_options=pipeline_options
+            )
+
+            if not content:
+                logger.info(f"No content extracted from {url}")
+                return None
+
             filepath = file_manager.save_file(
-                html_output, 
+                content,
                 url, 
                 extension='html'
             )
-        
-        # For markdown format (default), save with YAML frontmatter
+
         else:
-            # Add metadata header to markdown
+            metadata, content = content_extractor.extract_content(
+                html_content,
+                url,
+                output_format=output_format,
+                pipeline_options=pipeline_options
+            )
+
+            if not content:
+                logger.info(f"No content extracted from {url}")
+                return None
+
             header_lines = ['---']
             if metadata:
                 if metadata.get('title'):
@@ -328,16 +341,50 @@ def process_url(url, session, content_extractor, file_manager, output_format='ma
         
         if not filepath:
             logger.info(f"Failed to save content for {url}")
-            return False
+            return None
         
         logger.info(f"Successfully processed {url} -> {filepath}")
-        return True
+        return {
+            'url': url,
+            'filepath': filepath,
+            'metadata': metadata,
+            'content': content,
+        }
     
     except Exception as e:
         logger.error(f"Error processing {url}: {str(e)}")
         import traceback
         logger.debug(f"Traceback: {traceback.format_exc()}")
-        return False
+        return None
+
+
+def save_combined_json_output(file_manager, root_url, page_results):
+    """Write a combined site JSON file for per-page JSON exports."""
+    pages = []
+
+    for result in page_results:
+        page = {'url': result['url']}
+
+        if result.get('filepath'):
+            page['file'] = os.path.relpath(result['filepath'], file_manager.output_dir)
+
+        metadata = result.get('metadata') or {}
+        if isinstance(metadata, dict):
+            page.update(metadata)
+
+        if 'content' in result:
+            page['content'] = result['content']
+
+        pages.append(page)
+
+    combined_payload = {
+        'root_url': root_url,
+        'generated_at': datetime.now().isoformat(),
+        'total_pages': len(pages),
+        'pages': pages,
+    }
+
+    return file_manager.save_site_json(combined_payload)
 
 
 def main():
@@ -417,6 +464,7 @@ def main():
     # Process each URL
     successful = 0
     failed = 0
+    page_results = []
     logger.info(f"Processing {len(urls)} URLs...")
     
     try:
@@ -432,6 +480,8 @@ def main():
                 )
                 if result:
                     successful += 1
+                    if args.format == 'json':
+                        page_results.append(result)
                 else:
                     failed += 1
                 progress_bar.update(1)
@@ -447,6 +497,10 @@ def main():
     print(f"\nExtraction complete.")
     print(f"Successfully processed: {successful} URLs")
     print(f"Failed to process: {failed} URLs")
+    if args.format == 'json' and page_results:
+        combined_json_path = save_combined_json_output(file_manager, args.url, page_results)
+        if combined_json_path:
+            print(f"Combined JSON file: {os.path.abspath(combined_json_path)}")
     print(f"Output directory: {os.path.abspath(output_dir)}")
 
 

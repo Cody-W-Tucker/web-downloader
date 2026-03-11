@@ -49,21 +49,32 @@ class RateLimitedSession:
         self.last_request_time = defaultdict(float)  # time of last request per domain
         self.respect_robots = respect_robots
         
-        # Set up user agent
-        if user_agent:
-            self.user_agent = user_agent
-        else:
-            try:
-                ua = UserAgent()
-                self.user_agent = ua.chrome
-            except Exception:
-                self.user_agent = "WebToMarkdown/1.0"
+        # Store user_agent preference, but defer UserAgent instantiation
+        self._user_agent = user_agent
+        self._ua_instance = None
         
-        self.session.headers.update({"User-Agent": self.user_agent})
+        # Set up headers lazily - don't access self.user_agent yet
+        initial_ua = user_agent if user_agent else "WebToMarkdown/1.0"
+        self.session.headers.update({"User-Agent": initial_ua})
         
         # Initialize robots handler if needed
         if self.respect_robots:
-            self.robots_handler = RobotsHandler(self.user_agent)
+            # Pass initial UA to avoid triggering lazy loading during init
+            self.robots_handler = RobotsHandler(initial_ua)
+    
+    @property
+    def user_agent(self):
+        """Lazy property to get user agent, instantiates UserAgent only when needed."""
+        if self._user_agent is None:
+            if self._ua_instance is None:
+                try:
+                    self._ua_instance = UserAgent()
+                    self._user_agent = self._ua_instance.chrome
+                except Exception:
+                    self._user_agent = "WebToMarkdown/1.0"
+            else:
+                self._user_agent = self._ua_instance.chrome
+        return self._user_agent
     
     def _get_domain(self, url):
         """
@@ -125,7 +136,7 @@ class RateLimitedSession:
             logger.warning(f"Error requesting {url}: {str(e)}")
             
             # Implement exponential backoff for server errors
-            if hasattr(e.response, 'status_code') and 500 <= e.response.status_code < 600:
+            if e.response and hasattr(e.response, 'status_code') and 500 <= e.response.status_code < 600:
                 backoff_time = min(self.delay * 2, self.max_delay) * random.uniform(0.8, 1.2)
                 logger.info(f"Server error, backing off for {backoff_time:.2f}s")
                 time.sleep(backoff_time)

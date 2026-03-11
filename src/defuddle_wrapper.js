@@ -220,27 +220,21 @@ async function main() {
 
         if (options.format === 'json') {
             const output = {
-                success: true,
                 content: result.content,
                 title: result.title,
                 description: result.description,
-                author: result.author,
-                published: result.published,
                 domain: result.domain,
-                site: result.site,
-                language: result.language,
-                wordCount: result.wordCount,
-                parseTime: result.parseTime,
                 favicon: result.favicon,
                 image: result.image,
                 metaTags: result.metaTags,
+                parseTime: result.parseTime,
+                published: result.published,
+                author: result.author,
+                site: result.site,
                 schemaOrgData: result.schemaOrgData,
-                url: options.url
+                wordCount: result.wordCount,
+                ...(result.variables ? { variables: result.variables } : {})
             };
-
-            if (options.debug && result.debug) {
-                output.debug = result.debug;
-            }
 
             console.log(JSON.stringify(output, null, 2));
         } else if (options.format === 'markdown') {
